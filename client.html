@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>WebSocket 客户端</title>
+</head>
+<body>
+  <h2>红五冲冲冲</h2>
+  <button onclick="dealCards()">发牌</button>  
+  <button onclick="Ready()">准备</button>
+  <input type="text" id="message" placeholder="输入消息或牌组">
+  <button onclick="sendMessage()">发送消息</button>
+  <button onclick="playCard()">出牌</button>
+  <button onclick="ws.close()">关闭连接</button>
+  <div>
+    <div id="hand"></div>             <!-- 放置手牌按钮 -->
+    <button onclick="sendReady()">准备</button>
+    <button onclick="sendPlay()">出牌</button>
+  </div>
+  <pre id="log"></pre>
+
+  <script>
+    const log = document.getElementById('log');
+    const ws = new WebSocket("ws://localhost:8765");
+
+    ws.onopen = () => log.textContent += "✅ 已连接服务器\n";    
+    ws.onclose = () => log.textContent += "❌ 连接关闭\n";
+    ws.onmessage = (e) => log.textContent += "📩 收到消息: " + e.data + "\n";
+    ws.onerror = (error) => log.textContent += "❌ 错误: " + error.message + "\n";
+
+    function sendMessage() {
+      const message = document.getElementById('message').value;
+      ws.send(JSON.stringify({
+        type: "message",
+        content: message
+      }));
+      log.textContent += "📩 你说: " + message + "\n";
+    }
+    function Ready() {
+      ws.send(JSON.stringify({
+        type: "ready"
+      }));
+      log.textContent += "🃏 你准备好了\n";
+    }
+    function dealCards(){
+      ws.send(JSON.stringify({
+        type: "deal_cards"
+      }));
+    }
+    function playCard() {
+      const input = document.getElementById('message').value;
+      const cards = input.split(',').map(s => s.trim()).filter(Boolean);
+      
+      if (cards.length === 0) {
+        log.textContent += "⚠️ 请输入你要出的牌，例如: ♠A,♥5\n";
+        return;
+      }
+    
+      ws.send(JSON.stringify({
+        type: "play_card",
+        cards: cards
+      }));
+      log.textContent += "🃏 你出了牌: " + cards.join(', ') + "\n";
+    }
+
+  </script>
+</body>
+</html>
