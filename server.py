@@ -28,6 +28,13 @@ async def broadcast(room_id, message, sender_ws=None):
             except websockets.exceptions.ConnectionClosed:
                 print("连接断开，跳过发送")
 
+async def broadcast_all(room_id, message, sender_ws=None):
+    for ws, _ in rooms[room_id]:
+        try:
+            await ws.send(message)
+        except websockets.exceptions.ConnectionClosed:
+            print("连接断开，跳过发送")
+
 def assign_room(ws):
     for room_id, players in rooms.items():
         if len(players) < MAX_PLAYERS:
@@ -92,21 +99,23 @@ async def handler(ws):
                 }), sender_ws=ws)
 
             if data["type"] == "message":                
+                player_name = display_name(ws)
                 await broadcast(room_id, json.dumps({
                     "type": "chat",
                     "player_id": player_id,
                     "player_number": player_number,
-                    "player_name": display_name(ws),
+                    "player_name": player_name,
                     "content": data["content"]
                 }), sender_ws=ws)
 
             if data["type"] == "ready":
                 room_ready_state[room_id][player_number] = True
+                player_name = display_name(ws)
                 await broadcast(room_id, json.dumps({
                     "type": "ready_status",
                     "player_id": player_id,
                     "player_number": player_number,
-                    "player_name": display_name(ws),
+                    "player_name": player_name,
                 }), sender_ws=ws)
 
             if data["type"] == "deal_cards":
@@ -126,11 +135,10 @@ async def handler(ws):
                             "type": "error", 
                             "message": "缺少主数或主花色"
                         }))
-                        return
-                    
+                        return                    
                     rank_input = data["rank_input"]
                     suit_input = data["suit_input"]
-                    await broadcast(room_id, json.dumps({
+                    await broadcast_all(room_id, json.dumps({
                         "type": "deal_start",
                         "rank_input": rank_input,
                         "suit_input": suit_input
@@ -162,11 +170,12 @@ async def handler(ws):
                     player_info[ws]["hand"] = hand
 
                     # 广播此玩家出牌
+                    player_name = display_name(ws)
                     await broadcast(room_id, json.dumps({
                         "type": "play_card",
                         "player_id": player_id,
                         "player_number": player_number,
-                        "player_name": display_name(ws),
+                        "player_name": player_name,
                         "cards": cards_played
                     }))
                     # 发送剩余手牌给该玩家
@@ -213,7 +222,16 @@ async def handler(ws):
         if ws in player_info:
             info = player_info.pop(ws)
             room_id = info["room_id"]
+            player_id = info["player_id"]
             number = info["player_number"]
+            nickname = info.get("nickname")
+            player_name = f"{nickname} ({player_id})" if nickname else f"玩家 {number} ({player_id})"
+            await broadcast(room_id, json.dumps({
+                "type": "player_leave",
+                "player_number": number,
+                "player_name": player_name,
+                "room_id": room_id
+            }))
 
             # 移除玩家
             rooms[room_id] = [(w, n) for w, n in rooms[room_id] if w != ws]
@@ -225,11 +243,7 @@ async def handler(ws):
                 del room_ready_state[room_id]
                 del room_numbers[room_id]
             
-            await broadcast(room_id, json.dumps({
-                "type": "player_leave",
-                "player_number": number,
-                "room_id": room_id
-            }))
+
 
 async def main():
     print("服务器启动在 ws://localhost:8765")

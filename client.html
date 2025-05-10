@@ -22,6 +22,7 @@
 </head>
 <body>
   <h2>红五冲冲冲</h2> 
+  <div id="room-status"></div>
   <div>
     <input type="text" id="nicknameInput" placeholder="输入昵称">
     <button onclick="setNickname()">设置昵称</button>
@@ -31,9 +32,9 @@
   <!-- <button onclick="dealCards()">发牌</button>   -->
 
   <input type="text" id="message" placeholder="输入消息">
-  <button onclick="sendMessage()">发送消息</button>
+  <button onclick="sendMessage()">发送</button>
   <button onclick="clearLog()">🧹 清空日志</button>
-  <button onclick="ws.close()">关闭连接</button>
+  <!-- <button onclick="ws.close()">关闭连接</button> -->
   <div>
     <h3>你的手牌是：</h3>
     <div id="hand"></div>             <!-- 放置手牌按钮 -->
@@ -79,9 +80,13 @@
           case "ready_status":
             log.textContent += `🃏 ${data.player_name} 准备好了\n`;
             break;
-    
+            
           case "deal_start":
-            log.textContent += `🎲 开始发牌！\n`;
+            const status = document.getElementById("room-status");
+            const rank = data.rank_input;
+            const suit = data.suit_input;
+            status.textContent = `🎯 本轮主数：${rank}，主花色：${suit}`;
+            log.textContent += `🎲 开始发牌！主数是 ${rank}，主花色是 ${suit}\n`;
             break;
     
           case "deal_done":
