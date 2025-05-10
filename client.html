@@ -21,9 +21,11 @@
     </style> 
 </head>
 <body>
-  <h2>红五冲冲冲</h2>
-  <button onclick="dealCards()">发牌</button>  
+  <h2>红五冲冲冲</h2> 
   <button onclick="Ready()">准备</button>
+  <button onclick="promptTrump()">选择主数后发牌</button>
+  <!-- <button onclick="dealCards()">发牌</button>   -->
+
   <input type="text" id="message" placeholder="输入消息">
   <button onclick="sendMessage()">发送消息</button>
   <button onclick="ws.close()">关闭连接</button>
@@ -178,7 +180,23 @@
         cards: selectedCards
       }));
     }
+    function promptTrump() {
+      const rank = prompt("请选择本局的主数（例如 2~A）");
+      if (!rank || !["2","4","6","7","8","9","10","J","Q","K","A"].includes(rank)) {
+        alert("无效主数！");
+        return;
+      }
     
+      const suits = ["♠", "♥", "♣", "♦"];
+      const suit = suits[Math.floor(Math.random() * 4)];
+      alert("系统随机抽取的主花色是：" + suit);
+    
+      ws.send(JSON.stringify({
+        type: "deal_cards",
+        rank_input: rank,
+        suit_input: suit
+      }));
+    }
   </script>
 </body>
 </html>

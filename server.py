@@ -100,23 +100,33 @@ async def handler(ws):
 #                   await ws.send(json.dumps({
 #                       "type": "error", 
 #                       "message": "还有玩家没有准备"
-#                   }))
-
-                else:                        
-                    await broadcast(room_id, json.dumps({
-                        "type": "deal_start"
-                    }), sender_ws=ws)
-                    hidden, players = deal_and_sort("2", "♠")
+#                   }))                
+                else:
+                    if "rank_input" not in data or "suit_input" not in data:
+                        await ws.send(json.dumps({
+                            "type": "error", 
+                            "message": "缺少主数或主花色"
+                        }))
+                        return
                     
-                    for ws_i, player_i in rooms[room_id]:                        
+                    rank_input = data["rank_input"]
+                    suit_input = data["suit_input"]
+                    await broadcast(room_id, json.dumps({
+                        "type": "deal_start",
+                        "rank_input": rank_input,
+                        "suit_input": suit_input
+                    }), sender_ws=ws)
+
+                    hidden, players = deal_and_sort(rank_input, suit_input)
+
+                    for ws_i, player_i in rooms[room_id]:
                         player_info[ws_i]["hand"] = players[player_i]
                         player_info[ws_i]["hidden"] = []  # 初始无底牌
-
                         await ws_i.send(json.dumps({
                             "type": "your_hand",
                             "hand": players[player_i]
                         }))
-                       
+
                     await broadcast(room_id, json.dumps({
                         "type": "deal_done",
                         "room_id": room_id
