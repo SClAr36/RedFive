@@ -110,6 +110,8 @@ async def handler(ws):
                     
                     for ws_i, player_i in rooms[room_id]:                        
                         player_info[ws_i]["hand"] = players[player_i]
+                        player_info[ws_i]["hidden"] = []  # 初始无底牌
+
                         await ws_i.send(json.dumps({
                             "type": "your_hand",
                             "hand": players[player_i]
@@ -148,6 +150,31 @@ async def handler(ws):
                         "message": "你出的牌不在手牌中"
                     }))
 
+            elif data["type"] == "hide_cards":
+                cards = data["cards"]
+                hand = player_info[ws].get("hand", [])
+
+                if len(cards) != 8 or not all(card in hand for card in cards):
+                    await ws.send(json.dumps({
+                        "type": "error",
+                        "message": "藏牌失败：必须是你手中的8张牌"
+                    }))
+                else:
+                    # 从手牌中移除，存为底牌
+                    for card in cards:
+                        hand.remove(card)
+                    player_info[ws]["hand"] = hand
+                    player_info[ws]["hidden"] = cards
+
+                    # 返回更新后的手牌和底牌
+                    await ws.send(json.dumps({
+                        "type": "your_hand",
+                        "hand": hand
+                    }))
+                    await ws.send(json.dumps({
+                        "type": "your_hidden",
+                        "cards": cards
+                    }))
     
     except websockets.exceptions.ConnectionClosed:
         print("玩家断开连接")

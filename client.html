@@ -24,13 +24,17 @@
   <h2>红五冲冲冲</h2>
   <button onclick="dealCards()">发牌</button>  
   <button onclick="Ready()">准备</button>
-  <input type="text" id="message" placeholder="输入消息或牌组">
+  <input type="text" id="message" placeholder="输入消息">
   <button onclick="sendMessage()">发送消息</button>
   <button onclick="ws.close()">关闭连接</button>
   <div>
     <h3>你的手牌是：</h3>
     <div id="hand"></div>             <!-- 放置手牌按钮 -->
     <button onclick="sendPlay()">出牌</button>
+    <button onclick="hideCards()">藏牌</button>
+    <h3>你的底牌是：</h3>
+    <div id="hidden"></div>
+
   </div>
   <pre id="log"></pre>
 
@@ -44,9 +48,9 @@
 
     let hand = [];
 
-    ws.onmessage = (e) => {
+    ws.onmessage = (event) => {
       try {
-        const data = JSON.parse(e.data);
+        const data = JSON.parse(event.data);
     
         switch (data.type) {
           case "welcome":
@@ -78,7 +82,17 @@
             log.textContent += `🃏 你的手牌更新（${hand.length} 张）\n`;
             updateHandDisplay();
             break;
-    
+          
+          case "your_hidden":
+            const hiddenDiv = document.getElementById("hidden");
+            hiddenDiv.innerHTML = "";
+            data.cards.forEach(card => {
+              const el = document.createElement("span");
+              el.textContent = card + " ";
+              hiddenDiv.appendChild(el);
+            });
+            break;
+
           case "play_card":
             log.textContent += `🕹️ 玩家${data.player_number} 出了牌：${data.cards.join(", ")}\n`;
             break;
@@ -149,7 +163,22 @@
         cards: selectedCards
       }));
     }
-
+    function hideCards() {
+      const selectedCards = [
+        ...handDiv.querySelectorAll("button.card-button.selected")
+      ].map(btn => btn.textContent);
+    
+      if (selectedCards.length !== 8) {
+        alert("请选择恰好 8 张牌作为底牌！");
+        return;
+      }
+    
+      ws.send(JSON.stringify({
+        type: "hide_cards",
+        cards: selectedCards
+      }));
+    }
+    
   </script>
 </body>
 </html>
