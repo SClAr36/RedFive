@@ -22,12 +22,17 @@
 </head>
 <body>
   <h2>红五冲冲冲</h2> 
+  <div>
+    <input type="text" id="nicknameInput" placeholder="输入昵称">
+    <button onclick="setNickname()">设置昵称</button>
+  </div>  
   <button onclick="Ready()">准备</button>
-  <button onclick="promptTrump()">选择主数后发牌</button>
+  <button onclick="promptTrump()">发牌</button>
   <!-- <button onclick="dealCards()">发牌</button>   -->
 
   <input type="text" id="message" placeholder="输入消息">
   <button onclick="sendMessage()">发送消息</button>
+  <button onclick="clearLog()">🧹 清空日志</button>
   <button onclick="ws.close()">关闭连接</button>
   <div>
     <h3>你的手牌是：</h3>
@@ -60,15 +65,19 @@
             break;
     
           case "player_join":
-            log.textContent += `👤 玩家${data.player_id} (玩家 ${data.player_number} ) 加入了房间 ${data.room_id}\n`;
+            log.textContent += `👤 玩家${data.player_id} (玩家${data.player_number}) 加入了房间 ${data.room_id}\n`;
             break;
-
+          
+          case "nickname_set":
+            log.textContent += `📛 玩家${data.player_id} (玩家${data.player_number}) 设置昵称为 ${data.nickname}\n`;
+            break;
+          
           case "chat":
-            log.textContent += `💬 玩家${data.player_number}：${data.content}\n`;
+            log.textContent += `💬 ${data.player_name}：${data.content}\n`;
             break;
     
           case "ready_status":
-            log.textContent += `🃏 玩家${data.player_number} 准备好了\n`;
+            log.textContent += `🃏 ${data.player_name} 准备好了\n`;
             break;
     
           case "deal_start":
@@ -96,7 +105,7 @@
             break;
 
           case "play_card":
-            log.textContent += `🕹️ 玩家${data.player_number} 出了牌：${data.cards.join(", ")}\n`;
+            log.textContent += `🕹️ ${data.player_name} 出了牌：${data.cards.join(", ")}\n`;
             break;
     
           case "error":
@@ -104,7 +113,7 @@
             break;
     
           case "player_leave":
-            log.textContent += `👋 玩家${data.player_number} 离开了房间 ${data.room_id}\n`;
+            log.textContent += `👋 ${data.player_name} 离开了房间 ${data.room_id}\n`;
             break;
     
           default:
@@ -115,8 +124,19 @@
         log.textContent += "📩 非 JSON 消息: " + e.data + "\n";
       }
     };
-    
-
+    function setNickname() {
+      const nickname = document.getElementById("nicknameInput").value.trim();
+      if (nickname) {
+        ws.send(JSON.stringify({
+          type: "set_nickname",
+          nickname: nickname
+        }));
+        log.textContent += `📛 你设置的昵称是：${nickname}\n`;
+      }
+    }    
+    function clearLog() {
+      log.textContent = "";
+    }
     function sendMessage() {
       const message = document.getElementById('message').value;
       ws.send(JSON.stringify({

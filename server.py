@@ -44,6 +44,13 @@ def assign_room(ws):
     rooms[new_room_id].append((ws, player_number))
     return new_room_id, player_number
 
+def display_name(ws: websockets.WebSocketServerProtocol) -> str:
+    info = player_info.get(ws, {})
+    nickname = info.get("nickname")
+    player_id = info.get("player_id")
+    player_number = info.get("player_number")
+    return nickname if nickname else f"玩家 {player_number} ({player_id})"
+
 async def handler(ws):
     print("新玩家连接")
     try:
@@ -74,11 +81,22 @@ async def handler(ws):
             data = json.loads(msg)
             print(f"[{player_id}] 发送: {data}")
 
-            if data["type"] == "message":
+            if data["type"] == "set_nickname":
+                nickname = data["nickname"]
+                player_info[ws]["nickname"] = nickname
+                await broadcast(room_id, json.dumps({
+                    "type": "nickname_set",
+                    "player_id": player_id,
+                    "player_number": player_number,
+                    "nickname": nickname
+                }), sender_ws=ws)
+
+            if data["type"] == "message":                
                 await broadcast(room_id, json.dumps({
                     "type": "chat",
                     "player_id": player_id,
                     "player_number": player_number,
+                    "player_name": display_name(ws),
                     "content": data["content"]
                 }), sender_ws=ws)
 
@@ -88,6 +106,7 @@ async def handler(ws):
                     "type": "ready_status",
                     "player_id": player_id,
                     "player_number": player_number,
+                    "player_name": display_name(ws),
                 }), sender_ws=ws)
 
             if data["type"] == "deal_cards":
@@ -147,6 +166,7 @@ async def handler(ws):
                         "type": "play_card",
                         "player_id": player_id,
                         "player_number": player_number,
+                        "player_name": display_name(ws),
                         "cards": cards_played
                     }))
                     # 发送剩余手牌给该玩家

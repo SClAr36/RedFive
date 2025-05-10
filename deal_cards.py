@@ -1,5 +1,5 @@
 import random
-from typing import List
+from typing import List, Tuple
 from collections import defaultdict
 
 # -------------------- 配置 --------------------
@@ -77,6 +77,63 @@ def sort_hand(cards: List[str], rank_input: str, suit_input: str) -> List[str]:
     result += red_heart_5
 
     return result
+
+# def sort_hand_new(cards: List[str], rank_input: str, suit_input: str) -> Tuple[List[str], List[int]]:
+#     index_map = {card: [] for card in cards}
+#     for i, card in enumerate(cards):
+#         index_map[card].append(i)
+
+#     buckets = defaultdict(list)
+#     special_rank = []
+#     special_rank_same_suit = []
+#     special_3_same_color = []
+#     special_3_same_suit = []
+#     jokers = []
+#     red_heart_5 = []
+
+#     for card in cards:
+#         if card in JOKERS:
+#             jokers.append(card)
+#         elif card == '5♥':
+#             red_heart_5.append(card)
+#         else:
+#             rank = get_rank(card)
+#             suit = get_suit(card)
+
+#             if rank == rank_input and suit == suit_input:
+#                 special_rank_same_suit.append(card)
+#             elif rank == rank_input:
+#                 special_rank.append(card)
+#             elif rank == '3' and SUIT_COLOR[suit] == SUIT_COLOR[suit_input]:
+#                 if suit == suit_input:
+#                     special_3_same_suit.append(card)
+#                 else:
+#                     special_3_same_color.append(card)
+#             else:
+#                 buckets[suit].append(card)
+
+#     for suit in SUITS:
+#         buckets[suit].sort(key=lambda x: RANK_ORDER.index(get_rank(x)))
+
+#     suit_order = [s for s in SUITS if s != suit_input] + [suit_input]
+#     result = []
+#     for s in suit_order:
+#         result.extend(buckets[s])
+
+#     result += special_rank
+#     result += special_rank_same_suit
+#     result += special_3_same_color
+#     result += special_3_same_suit
+#     result += jokers
+#     result += red_heart_5
+
+#     # 查找排序后每张牌在原始 cards 中的索引
+#     index_order = []
+#     for card in result:
+#         index_order.append(index_map[card].pop(0))
+
+#     return result, index_order
+
 
 # -------------------- 主程序 --------------------
 
