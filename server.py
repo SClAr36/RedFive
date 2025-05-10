@@ -57,39 +57,73 @@ async def handler(ws):
         room_ready_state[room_id][player_number] = False
         print(player_info[ws])
 
-        await ws.send(f"欢迎加入房间 {room_id}，你是玩家 {player_number}")
-        await broadcast(room_id, f"{player_id}（玩家{player_number}）加入了房间", sender_ws=ws)
+        await ws.send(json.dumps({
+            "type": "welcome",
+            "room_id": room_id,
+            "player_id": player_id,
+            "player_number": player_number
+        }))        
+        await broadcast(room_id, json.dumps({
+            "type": "player_join",
+            "room_id": room_id,
+            "player_id": player_id,
+            "player_number": player_number
+        }), sender_ws=ws)
 
         async for msg in ws:
             data = json.loads(msg)
             print(f"[{player_id}] 发送: {data}")
 
             if data["type"] == "message":
-                await broadcast(room_id, f"玩家{player_number} 发送了一条消息：{data["content"]}", sender_ws=ws)
+                await broadcast(room_id, json.dumps({
+                    "type": "chat",
+                    "player_id": player_id,
+                    "player_number": player_number,
+                    "content": data["content"]
+                }), sender_ws=ws)
 
             if data["type"] == "ready":
                 room_ready_state[room_id][player_number] = True
-                await broadcast(room_id, f"玩家{player_number} 准备好了", sender_ws=ws)
+                await broadcast(room_id, json.dumps({
+                    "type": "ready_status",
+                    "player_id": player_id,
+                    "player_number": player_number,
+                }), sender_ws=ws)
 
             if data["type"] == "deal_cards":
                 if len(room_ready_state[room_id]) < MAX_PLAYERS:
-                    await ws.send("玩家还没到齐")
-#                elif all(room_ready_state[room_id].values()) == False:
-#                     await ws.send("玩家还没准备好")
+                    await ws.send(json.dumps({
+                        "type": "error", 
+                        "message": "玩家没有到齐"
+                    }))
+#               elif all(room_ready_state[room_id].values()) == False:
+#                   await ws.send(json.dumps({
+#                       "type": "error", 
+#                       "message": "还有玩家没有准备"
+#                   }))
+
                 else:                        
-                    await broadcast(room_id, f"现在开始发牌！", sender_ws=ws)
+                    await broadcast(room_id, json.dumps({
+                        "type": "deal_start"
+                    }), sender_ws=ws)
                     hidden, players = deal_and_sort("2", "♠")
+                    
                     for ws_i, player_i in rooms[room_id]:                        
                         player_info[ws_i]["hand"] = players[player_i]
-                        await ws_i.send(f"你的手牌是{players[player_i]}")                       
-                    # 广播发牌完成消息
-                    await broadcast(room_id, f"房间 {room_id} 发牌完成")
+                        await ws_i.send(json.dumps({
+                            "type": "your_hand",
+                            "hand": players[player_i]
+                        }))
+                       
+                    await broadcast(room_id, json.dumps({
+                        "type": "deal_done",
+                        "room_id": room_id
+                    }))
             
             elif data["type"] == "play_card":
                 cards_played = data["cards"]
                 hand = player_info[ws].get("hand", [])
                 
-                print(all(card in hand for card in cards_played))
                 if all(card in hand for card in cards_played):
                     # 从手牌中移除已出的牌
                     for card in cards_played:
@@ -97,15 +131,22 @@ async def handler(ws):
                     player_info[ws]["hand"] = hand
 
                     # 广播此玩家出牌
-                    await broadcast(room_id, f"玩家{player_number} 出了牌: {cards_played}")
-                    print(f"玩家{player_number} 出了牌: {cards_played}")
-
+                    await broadcast(room_id, json.dumps({
+                        "type": "play_card",
+                        "player_id": player_id,
+                        "player_number": player_number,
+                        "cards": cards_played
+                    }))
                     # 发送剩余手牌给该玩家
-                    await ws.send(f"你剩余的手牌: {hand}")
-                    print(f"玩家{player_number} 剩余手牌: {hand}")
+                    await ws.send(json.dumps({
+                        "type": "your_hand",
+                        "hand": hand
+                    }))
                 else:
-                    await ws.send("你出的牌不在手牌中，请重新选择。")
-                print(player_info)
+                    await ws.send(json.dumps({
+                        "type": "error", 
+                        "message": "你出的牌不在手牌中"
+                    }))
 
     
     except websockets.exceptions.ConnectionClosed:
@@ -126,8 +167,12 @@ async def handler(ws):
                 del rooms[room_id]
                 del room_ready_state[room_id]
                 del room_numbers[room_id]
-
-            await broadcast(room_id, f"玩家{number} 离开了房间 {room_id}")
+            
+            await broadcast(room_id, json.dumps({
+                "type": "player_leave",
+                "player_number": number,
+                "room_id": room_id
+            }))
 
 async def main():
     print("服务器启动在 ws://localhost:8765")

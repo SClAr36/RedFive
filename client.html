@@ -3,6 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <title>WebSocket 客户端</title>
+    <!-- 样式放在这里 -->
+    <style>
+      #hand button.card-button {
+        margin: 5px;
+        padding: 10px;
+        font-size: 18px;
+        border: 1px solid #999;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+  
+      #hand button.card-button.selected {
+        background-color: #ffd;
+        border: 2px solid red;
+      }
+    </style> 
 </head>
 <body>
   <h2>红五冲冲冲</h2>
@@ -10,23 +26,80 @@
   <button onclick="Ready()">准备</button>
   <input type="text" id="message" placeholder="输入消息或牌组">
   <button onclick="sendMessage()">发送消息</button>
-  <button onclick="playCard()">出牌</button>
   <button onclick="ws.close()">关闭连接</button>
   <div>
+    <h3>你的手牌是：</h3>
     <div id="hand"></div>             <!-- 放置手牌按钮 -->
-    <button onclick="sendReady()">准备</button>
     <button onclick="sendPlay()">出牌</button>
   </div>
   <pre id="log"></pre>
 
   <script>
+    const handDiv = document.getElementById("hand");
     const log = document.getElementById('log');
-    const ws = new WebSocket("ws://localhost:8765");
-
+    const ws = new WebSocket("ws://localhost:8765");    
+    
     ws.onopen = () => log.textContent += "✅ 已连接服务器\n";    
-    ws.onclose = () => log.textContent += "❌ 连接关闭\n";
-    ws.onmessage = (e) => log.textContent += "📩 收到消息: " + e.data + "\n";
-    ws.onerror = (error) => log.textContent += "❌ 错误: " + error.message + "\n";
+    ws.onclose = () => log.textContent += "🔌 连接关闭\n";
+
+    let hand = [];
+
+    ws.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+    
+        switch (data.type) {
+          case "welcome":
+            log.textContent = `欢迎加入房间 ${data.room_id}，${data.player_id}，你是玩家 ${data.player_number}\n`;
+            break;
+    
+          case "player_join":
+            log.textContent += `👤 玩家${data.player_id} (玩家 ${data.player_number} ) 加入了房间 ${data.room_id}\n`;
+            break;
+
+          case "chat":
+            log.textContent += `💬 玩家${data.player_number}：${data.content}\n`;
+            break;
+    
+          case "ready_status":
+            log.textContent += `🃏 玩家${data.player_number} 准备好了\n`;
+            break;
+    
+          case "deal_start":
+            log.textContent += `🎲 开始发牌！\n`;
+            break;
+    
+          case "deal_done":
+            log.textContent += `✅ 房间 ${data.room_id}发牌完成！\n`;
+            break;
+    
+          case "your_hand":
+            hand = data.hand;
+            log.textContent += `🃏 你的手牌更新（${hand.length} 张）\n`;
+            updateHandDisplay();
+            break;
+    
+          case "play_card":
+            log.textContent += `🕹️ 玩家${data.player_number} 出了牌：${data.cards.join(", ")}\n`;
+            break;
+    
+          case "error":
+            alert("⚠️ 错误：" + data.message);
+            break;
+    
+          case "player_leave":
+            log.textContent += `👋 玩家${data.player_number} 离开了房间 ${data.room_id}\n`;
+            break;
+    
+          default:
+            log.textContent += `📩 收到未知类型消息: ${e.data}\n`;
+        }
+    
+      } catch {
+        log.textContent += "📩 非 JSON 消息: " + e.data + "\n";
+      }
+    };
+    
 
     function sendMessage() {
       const message = document.getElementById('message').value;
@@ -47,20 +120,34 @@
         type: "deal_cards"
       }));
     }
-    function playCard() {
-      const input = document.getElementById('message').value;
-      const cards = input.split(',').map(s => s.trim()).filter(Boolean);
-      
-      if (cards.length === 0) {
-        log.textContent += "⚠️ 请输入你要出的牌，例如: ♠A,♥5\n";
+    
+    function updateHandDisplay() {
+      handDiv.innerHTML = "";  // 清空旧的手牌显示
+    
+      hand.forEach(card => {
+        const btn = document.createElement("button");
+        btn.textContent = card;
+        btn.classList.add("card-button");
+        btn.onclick = () => {
+          btn.classList.toggle("selected");
+        };
+        handDiv.appendChild(btn);
+      });
+    }
+    function sendPlay() {
+      const selectedCards = [
+        ...handDiv.querySelectorAll("button.card-button.selected")
+      ].map(btn => btn.textContent);
+    
+      if (selectedCards.length === 0) {
+        alert("请先选择要出的牌！");
         return;
       }
     
       ws.send(JSON.stringify({
         type: "play_card",
-        cards: cards
+        cards: selectedCards
       }));
-      log.textContent += "🃏 你出了牌: " + cards.join(', ') + "\n";
     }
 
   </script>
