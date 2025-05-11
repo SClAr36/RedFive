@@ -137,6 +137,8 @@
           nickname: nickname
         }));
         log.textContent += `📛 你设置的昵称是：${nickname}\n`;
+        document.getElementById('nicknameInput').value = "";
+
       }
     }    
     function clearLog() {
@@ -149,6 +151,7 @@
         content: message
       }));
       log.textContent += "📩 你说: " + message + "\n";
+      document.getElementById('message').value = "";
     }
     function Ready() {
       ws.send(JSON.stringify({
