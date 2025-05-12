@@ -11,7 +11,6 @@ class Team:
     team_id: int                    # 队伍编号（0 或 1）
     members: List[Player]          # 队伍成员
     trump_rank: Rank               # 当前主数（例如 Rank.FIVE）
-    score: int = 0                 # 累计分数
     is_dealer: bool = False        # 是否为当前庄家
 
     def promote_trump(self):
