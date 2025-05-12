@@ -76,33 +76,87 @@
     }
     
     #hand {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
+      position: relative;
+      min-height: 150px;
       margin: 15px 0;
     }
     
-    button.card-button {
-      padding: 12px;
-      font-size: 18px;
-      border: 2px solid #ddd;
-      border-radius: 8px;
-      cursor: pointer;
+    .card-container {
+      position: relative;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    
+    .card-row {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      position: relative;  /* 添加相对定位 */
+    }
+    
+    .card-row:nth-child(2) {
+      top: 1px;  /* 第二排下移60px（120px高度的一半） */
+      margin-left: 1px;  /* 向右偏移40px让牌错开 */
+    }
+    
+    .card {
+      position: relative;
+      width: 80px;
+      height: 120px;
       background-color: white;
-      color: #333;
-      min-width: 50px;
-      transition: all 0.2s;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      user-select: none;
+      transform-origin: center bottom;
+      border: 2px solid #ddd;
+      margin-right: -50px;
     }
     
-    button.card-button:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    .card-rank, .card-suit {
+      position: absolute;
+      left: 5px;  /* 距离左侧5px */
     }
     
-    button.card-button.selected {
-      background-color: #ffebee;
+    .card-rank {
+      top: 5px;  /* 点数在上 */
+    }
+    
+    .card-suit {
+      top: 30px;  /* 花色在下，与点数保持间距 */
+    }
+    
+    .card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+    }
+    
+    .card.selected {
+      transform: translateY(-30px);
       border: 2px solid #d32f2f;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+      z-index: 10;
+    }
+    
+    .card[data-suit="♥"] .card-rank,
+    .card[data-suit="♥"] .card-suit,
+    .card[data-suit="♦"] .card-rank,
+    .card[data-suit="♦"] .card-suit {
       color: #d32f2f;
+    }
+    
+    .card[data-suit="♠"] .card-rank,
+    .card[data-suit="♠"] .card-suit,
+    .card[data-suit="♣"] .card-rank,
+    .card[data-suit="♣"] .card-suit {
+      color: #333;
     }
     
     #hidden {
@@ -144,6 +198,8 @@
       display: flex;
       gap: 10px;
       margin: 15px 0;
+      position: relative;
+      z-index: 20;
     }
     
     .section-title {
@@ -189,7 +245,9 @@
     </div>
     
     <h3 class="section-title">你的手牌：</h3>
-    <div id="hand"></div>
+    <div id="hand">
+      <div class="card-container" id="card-container"></div>
+    </div>
     
     <div class="action-buttons">
       <button onclick="sendPlay()">出牌</button>
@@ -207,7 +265,7 @@
   <pre id="log"></pre>
 
   <script>
-    const handDiv = document.getElementById("hand");
+    const handDiv = document.getElementById("card-container");
     const log = document.getElementById('log');
     const roomStatus = document.getElementById("room-status");
     const ws = new WebSocket("ws://localhost:8765");    
@@ -339,23 +397,69 @@
     }
     
     function updateHandDisplay() {
-      handDiv.innerHTML = "";  // 清空旧的手牌显示
-    
-      hand.forEach(card => {
-        const btn = document.createElement("button");
-        btn.textContent = card;
-        btn.classList.add("card-button");
-        btn.onclick = () => {
-          btn.classList.toggle("selected");
-        };
-        handDiv.appendChild(btn);
+      handDiv.innerHTML = "";
+      
+      const row1 = document.createElement("div");
+      row1.className = "card-row";
+      const row2 = document.createElement("div");
+      row2.className = "card-row";
+      
+      const half = Math.ceil(hand.length / 2);
+      const firstRowCards = hand.slice(0, half);
+      const secondRowCards = hand.slice(half);
+      
+      firstRowCards.forEach((card, index) => {
+        const cardEl = createCardElement(card, index);
+        row1.appendChild(cardEl);
       });
+      
+      secondRowCards.forEach((card, index) => {
+        const cardEl = createCardElement(card, index);
+        row2.appendChild(cardEl);
+      });
+      
+      handDiv.appendChild(row1);
+      handDiv.appendChild(row2);
+    }
+    
+    function createCardElement(card, index) {
+      const cardEl = document.createElement("div");
+      cardEl.className = "card";
+      
+      const rank = card.slice(0, -1);
+      const suit = card.slice(-1);
+      
+      const rankEl = document.createElement("div");
+      rankEl.className = "card-rank";
+      rankEl.textContent = rank;
+      
+      const suitEl = document.createElement("div");
+      suitEl.className = "card-suit";
+      suitEl.textContent = suit;
+      
+      cardEl.appendChild(rankEl);
+      cardEl.appendChild(suitEl);
+      
+      if (['♥', '♦', '♠', '♣'].includes(suit)) {
+        cardEl.setAttribute('data-suit', suit);
+      }
+      
+      cardEl.style.zIndex = index;
+      
+      cardEl.onclick = () => {
+        cardEl.classList.toggle("selected");
+      };
+      
+      return cardEl;
     }
     
     function sendPlay() {
-      const selectedCards = [
-        ...handDiv.querySelectorAll("button.card-button.selected")
-      ].map(btn => btn.textContent);
+      const selectedCards = [];
+      document.querySelectorAll(".card.selected").forEach(card => {
+        const rank = card.querySelector(".card-rank").textContent;
+        const suit = card.querySelector(".card-suit").textContent;
+        selectedCards.push(rank + suit);
+      });
     
       if (selectedCards.length === 0) {
         alert("请先选择要出的牌！");
@@ -366,12 +470,19 @@
         type: "play_card",
         cards: selectedCards
       }));
+      
+      document.querySelectorAll(".card.selected").forEach(card => {
+        card.classList.remove("selected");
+      });
     }
     
     function hideCards() {
-      const selectedCards = [
-        ...handDiv.querySelectorAll("button.card-button.selected")
-      ].map(btn => btn.textContent);
+      const selectedCards = [];
+      document.querySelectorAll(".card.selected").forEach(card => {
+        const rank = card.querySelector(".card-rank").textContent;
+        const suit = card.querySelector(".card-suit").textContent;
+        selectedCards.push(rank + suit);
+      });
     
       if (selectedCards.length !== 8) {
         alert("请选择恰好 8 张牌作为底牌！");
@@ -382,6 +493,10 @@
         type: "hide_cards",
         cards: selectedCards
       }));
+      
+      document.querySelectorAll(".card.selected").forEach(card => {
+        card.classList.remove("selected");
+      });
     }
     
     function promptTrump() {
