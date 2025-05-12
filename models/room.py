@@ -13,7 +13,7 @@ class Room:
     teams: Dict[int, Team] = field(default_factory=dict)
     active_game: Optional[Game] = None
     past_games: List[Game] = field(default_factory=list)
-    round_count: int = 0
+    game_count: int = 0
 
     def start_new_game(self, new_team_config: Optional[Dict[int, List[Player]]] = None):
         if self.active_game:
