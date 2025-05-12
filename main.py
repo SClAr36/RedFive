@@ -85,16 +85,16 @@ async def handler(ws):
                     }))
                     continue
 
-                rank_input = RANK_STR_TO_ENUM[data["rank_input"]]  # ✅ 正确映射
+                rank_input = data["rank_input"]
                 suit_input = data["suit_input"]
 
                 await manager.broadcast(room, {
                     "type": "deal_start",
-                    "rank_input": rank_input.name,
+                    "rank_input": rank_input,
                     "suit_input": suit_input
                 })
 
-                hidden, sorted_hands = Cards.deal_and_sort(rank_input.name, suit_input)
+                hidden, sorted_hands = Cards.deal_and_sort(rank_input, suit_input)
 
                 for idx, p in enumerate(room.players):
                     p.hand = sorted_hands[idx]
