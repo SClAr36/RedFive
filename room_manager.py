@@ -8,6 +8,7 @@ from models.room import Room
 from models.enums import Rank
 from models.team import Team
 
+
 class RoomManager:
     """统一管理所有房间（room_id）、每个连接对应的玩家，以及广播"""
 

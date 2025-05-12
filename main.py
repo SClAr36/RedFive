@@ -2,10 +2,9 @@ import asyncio
 import json
 import websockets
 
-from deal_cards import deal_and_sort
 from room_manager import RoomManager
 from models.enums import Rank, RANK_STR_TO_ENUM
-
+from models.cards import Cards
 
 manager = RoomManager()
 
@@ -95,7 +94,7 @@ async def handler(ws):
                     "suit_input": suit_input
                 })
 
-                hidden, sorted_hands = deal_and_sort(rank_input.name, suit_input)
+                hidden, sorted_hands = Cards.deal_and_sort(rank_input.name, suit_input)
 
                 for idx, p in enumerate(room.players):
                     p.hand = sorted_hands[idx]
