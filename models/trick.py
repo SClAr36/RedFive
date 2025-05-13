@@ -3,7 +3,7 @@ from typing import List, Tuple, Optional, Dict
 
 from .player import Player
 from .team import Team
-from .cards import Cards
+from .cards import Cards, card_value
 
 @dataclass
 class Trick:
@@ -44,7 +44,7 @@ class Trick:
     
         # 找出最大牌
         winner_number, winning_card, winning_team = max(
-            self.play_sequence, key=lambda x: card_value(x[1], self.trump_rank, self.trump_suit)
+            self.play_sequence, key=lambda x: Cards.card_value(x[1], self.trump_rank, self.trump_suit)
         )
     
         self.winning_player_number = winner_number
@@ -60,53 +60,6 @@ class Trick:
         return winner_number, winning_card, winning_team, self.points
     
     
-def card_rank_value(card: str) -> int:
-    """
-    给一张牌赋值：
-    - 普通点数牌按 J=11, Q=12, K=13, A=14
-    - JOKER1=400, JOKER2=450
-    """
-    rank = Cards.get_rank(card)
-
-    if rank == 'JOKER1':
-        return 400
-    elif rank == 'JOKER2':
-        return 450
-    elif rank in ['J', 'Q', 'K', 'A']:
-        rank_value = {'J': 11, 'Q': 12, 'K': 13, 'A': 14}
-        return rank_value[rank]
-    else:
-        return int(rank)   
-
-def card_value(card: str, trump_rank: str, trump_suit: str) -> int:
-    # 为不同大小的牌赋分，牌越大分值越大
-    
-    SUIT_COLOR = {
-        '♠': 'black', '♣': 'black',  # 黑色花色
-        '♥': 'red', '♦': 'red'  # 红色花色
-    }
-
-    advisor = "3♣"
-    deputy_advisor = "3♠"
-
-        
-    card_suit = Cards.get_suit(card)
-    card_rank = Cards.get_rank(card)
-    card_value = card_rank_value(card)
-    
-    if card == '5♥':
-        card_value = 500
-    elif card == advisor:
-        card_value = 350
-    elif card == deputy_advisor:
-        card_value =  300
-    elif card_rank == trump_rank and card_suit == trump_suit:
-        card_value += 250
-    elif card_rank == trump_rank:
-        card_value += 200
-    elif card_suit == trump_suit:
-        card_value += 100
-    return card_value
 
 
 

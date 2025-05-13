@@ -1,5 +1,5 @@
 import random
-from typing import List, Dict
+from typing import List, Dict, Tuple, Optional
 from collections import defaultdict
 
 
@@ -143,6 +143,119 @@ class Cards:
             sorted_players[i] = Cards.sort_hand(players[i], rank_input, suit_input)
 
         return hidden, sorted_players
+    
+
+    @staticmethod
+    def card_rank_value(card: str) -> int:
+        """
+        给一张牌赋值：
+        - 普通点数牌按 J=11, Q=12, K=13, A=14
+        - JOKER1=400, JOKER2=450
+        """
+        rank = Cards.get_rank(card)
+    
+        if rank == 'JOKER1':
+            return 400
+        elif rank == 'JOKER2':
+            return 450
+        elif rank in ['J', 'Q', 'K', 'A']:
+            rank_value = {'J': 11, 'Q': 12, 'K': 13, 'A': 14}
+            return rank_value[rank]
+        else:
+            return int(rank)   
+    
+    @staticmethod
+    def card_value(card: str, trump_rank: str, trump_suit: str) -> int:
+        # 为不同大小的牌赋分，牌越大分值越大
+
+        trump_color = Cards.SUIT_COLOR[trump_suit] 
+        same_color_suits = [s for s, color in Cards.SUIT_COLOR.items() if color == Cards.SUIT_COLOR[trump_suit]]
+    
+        advisor = f"3{trump_suit}"
+        deputy_suit = [s for s in same_color_suits if s != trump_suit][0]
+        deputy_advisor = f"3{deputy_suit}"
+            
+        card_suit = Cards.get_suit(card)
+        card_rank = Cards.get_rank(card)
+        card_value = Cards.card_rank_value(card)
+        
+        if card == '5♥':
+            card_value = 500
+        elif card == advisor:
+            card_value = 350
+        elif card == deputy_advisor:
+            card_value =  300
+        elif card_rank == trump_rank and card_suit == trump_suit:
+            card_value += 250
+        elif card_rank == trump_rank:
+            card_value += 200
+        elif card_suit == trump_suit:
+            card_value += 100
+        return card_value
+
+    @staticmethod    
+    def is_valid_combo(cards: List[str], trump_rank: str, trump_suit: str) -> Tuple[bool, Optional[str]]:
+        ranks = [Cards.get_rank(c) for c in cards]
+        suits = [Cards.get_suit(c) for c in cards]
+        colors = [Cards.SUIT_COLOR.get(s, '') for s in suits]
+
+        same_color = len(set(colors)) == 1
+        same_suit = len(set(suits)) == 1
+
+        advisor = f"3{trump_suit}"
+        deputy_suit = next(s for s, c in Cards.SUIT_COLOR.items() if c == Cards.SUIT_COLOR[trump_suit] and s != trump_suit)
+        deputy_advisor = f"3{deputy_suit}"
+        if not cards:
+            return False, None #非法牌型！请重新出牌！
+    
+        if len(cards) == 1:
+            return True, cards[0]
+    
+        if len(cards) == 2:
+            return (True, cards[0]) if cards[0] == cards[1] else (False, None)
+    
+        if len(cards) == 3:
+            # 三张 Joker
+            if all(r in Cards.JOKERS for r in cards):
+                return True, cards[0]
+    
+            # 三张主数，颜色相同
+            if all(r == trump_rank for r in ranks) and same_color:
+                return True, cards[0]
+    
+            # 三张 advisor，颜色相同
+            if all(c in [advisor, deputy_advisor] for c in cards):
+                return True, cards[0]
+    
+            # 特殊组合，且要求三张牌同花色
+            sorted_ranks = sorted(ranks)
+            if same_suit:
+                if trump_rank not in ['K', 'A']:
+                    if sorted_ranks in [['A', 'K', 'K'], ['A', 'A', 'K']]:
+                        return True, cards[0]
+                elif trump_rank == 'K':
+                    if sorted_ranks in [['A', 'Q', 'Q'], ['A', 'A', 'Q']]:
+                        return True, cards[0]
+                elif trump_rank == 'A':
+                    if sorted_ranks in [['K', 'Q', 'Q'], ['K', 'K', 'Q']]:
+                        return True, cards[0]
+        
+        if len(cards) == 4:
+            # 四张 Joker
+            if all(r in Cards.JOKERS for r in cards):
+                return True, cards[0]
+    
+            # 四张主数，颜色相同
+            if all(r == trump_rank for r in ranks) and same_color:
+                return True, cards[0]
+    
+            # 四张 advisor，颜色相同
+            if all(c in [advisor, deputy_advisor] for c in cards):
+                return True, cards[0]
+                
+                
+        return False, None
+
 
 
 # -------------------- 运行示例 --------------------
