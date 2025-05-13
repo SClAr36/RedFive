@@ -134,23 +134,19 @@ async def handler(ws):
                     continue
             
                 # 获取当前 Trick 实例
-
 #                trick = room.active_game.current_deal.tricks[-1]
-
                 trick = deal.tricks[-1] if deal.tricks else None
-                print("出牌前，当前 Trick 序号:", trick.trick_number)
-                print(trick.play_sequence)
-
-                # 使用你更新的 record_play 接口
-                error_msg = trick.record_play(player, cards)
+                trump_rank = deal.trump_rank
+                trump_suit = deal.trump_suit
+                # 使用 Trick 内部的出牌记录逻辑
+                error_msg = trick.record_play(player, cards, trump_rank, trump_suit)
                 if error_msg:
                     await ws.send(json.dumps({
                         "type": "error",
                         "message": error_msg
                     }))
                     continue
-   
-            
+               
                 # 移除手牌中已出的牌
                 for c in cards:
                     player.hand.remove(c)
