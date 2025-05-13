@@ -8,6 +8,8 @@ from .cards import Cards
 @dataclass
 class Trick:
     """表示一轮出牌（4人各出一张）的记录和结果"""
+    trump_rank: str  # 主数
+    trump_suit: str  # 主花色
     starting_player_index: int  # 这一轮从哪位玩家开始（0~3）(加上默认庄家)
     winning_team_id: Optional[int] = None
     trick_number: int = 0 #这是第几轮出牌
@@ -41,7 +43,9 @@ class Trick:
         """
     
         # 找出最大牌
-        winner_number, winning_card, winning_team = max(self.play_sequence, key=lambda x: card_value(x[1]))
+        winner_number, winning_card, winning_team = max(
+            self.play_sequence, key=lambda x: card_value(x[1], self.trump_rank, self.trump_suit)
+        )
     
         self.winning_player_number = winner_number
         self.winning_team_id = winning_team
@@ -74,7 +78,7 @@ def card_rank_value(card: str) -> int:
     else:
         return int(rank)   
 
-def card_value(card: str) -> int:
+def card_value(card: str, trump_rank: str, trump_suit: str) -> int:
     # 为不同大小的牌赋分，牌越大分值越大
     
     SUIT_COLOR = {
@@ -84,8 +88,7 @@ def card_value(card: str) -> int:
 
     advisor = "3♣"
     deputy_advisor = "3♠"
-    trump_rank = "2"
-    trump_suit = "♣"  # 假设主花色为草花
+
         
     card_suit = Cards.get_suit(card)
     card_rank = Cards.get_rank(card)

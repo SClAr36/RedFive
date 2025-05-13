@@ -136,7 +136,7 @@ class Cards:
         for i in range(100):
             players[i % 4].append(remaining[i])
 
-        players[3].extend(hidden)
+        players[0].extend(hidden)
 
         sorted_players = {}
         for i in range(4):

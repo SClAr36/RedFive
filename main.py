@@ -7,13 +7,12 @@ from room_manager import RoomManager
 from models.enums import Rank, RANK_STR_TO_ENUM
 from models.cards import Cards
 from models.trick import Trick
+from models.deal import Deal
 
 
 manager = RoomManager()
 
-trick_list: List[Trick] = []
-test_trick = Trick(starting_player_index=0, winning_team_id = 0)  # 设置起始玩家为 0
-trick_list.append(test_trick)
+deal = Deal(deal_number=0, dealer_team=0, challenger_team=1, trump_rank=None, trump_suit=None)
 
 async def handler(ws):
     print("新玩家连接")
@@ -117,6 +116,11 @@ async def handler(ws):
                     "type": "deal_done",
                     "room_id": room.room_id
                 })
+                
+                deal.deal_number += 1
+                deal.trump_rank=rank_input
+                deal.trump_suit=suit_input
+                deal.tricks.append(Trick(trump_rank=deal.trump_rank, trump_suit=deal.trump_suit, starting_player_index=0))
 
             elif data["type"] == "play_card":
                 cards = data["cards"]
@@ -133,7 +137,7 @@ async def handler(ws):
 
 #                trick = room.active_game.current_deal.tricks[-1]
 
-                trick = trick_list[-1]
+                trick = deal.tricks[-1] if deal.tricks else None
                 print("出牌前，当前 Trick 序号:", trick.trick_number)
                 print(trick.play_sequence)
 
@@ -180,12 +184,14 @@ async def handler(ws):
             
                     # 新 Trick，胜者先出
                     new_trick = Trick(
+                        trump_rank=deal.trump_rank,
+                        trump_suit=deal.trump_suit,
                         trick_number=trick.trick_number + 1,
                         starting_player_index=winner,
                         winning_team_id=team_id
                     )
 #                    room.active_game.current_deal.tricks.append(new_trick)
-                    trick_list.append(new_trick)
+                    deal.tricks.append(new_trick)
                 print(f"出完牌后, {trick.trick_number=}, {trick.play_sequence=}")
             
 
