@@ -1,21 +1,29 @@
 import asyncio
 import json
 import websockets
+from typing import List
 
 from room_manager import RoomManager
 from models.enums import Rank, RANK_STR_TO_ENUM
 from models.cards import Cards
+from models.trick import Trick
+
 
 manager = RoomManager()
+
+trick_list: List[Trick] = []
+test_trick = Trick(starting_player_index=0, winning_team_id = 0)  # 设置起始玩家为 0
+trick_list.append(test_trick)
 
 async def handler(ws):
     print("新玩家连接")
     try:
         player = manager.assign_player(ws)
         room = manager.get_room(ws)
-        game = room.active_game
 
         player_number = room.players.index(player)
+        player.player_number = player_number
+
 
         await ws.send(json.dumps({
             "type": "welcome",
@@ -112,25 +120,74 @@ async def handler(ws):
 
             elif data["type"] == "play_card":
                 cards = data["cards"]
-                if all(c in player.hand for c in cards):
-                    for c in cards:
-                        player.hand.remove(c)
-                    await manager.broadcast(room, {
-                        "type": "play_card",
-                        "player_id": player.player_id,
-                        "player_number": player_number,
-                        "player_name": player.nickname or f"玩家 {player_number}",
-                        "cards": cards
-                    })
-                    await ws.send(json.dumps({
-                        "type": "your_hand",
-                        "hand": player.hand
-                    }))
-                else:
+            
+                # 检查所有牌都在手牌中
+                if not all(c in player.hand for c in cards):
                     await ws.send(json.dumps({
                         "type": "error",
                         "message": "你出的牌不在手牌中"
                     }))
+                    continue
+            
+                # 获取当前 Trick 实例
+
+#                trick = room.active_game.current_deal.tricks[-1]
+
+                trick = trick_list[-1]
+                print("出牌前，当前 Trick 序号:", trick.trick_number)
+                print(trick.play_sequence)
+
+                # 使用你更新的 record_play 接口
+                error_msg = trick.record_play(player, cards)
+                if error_msg:
+                    await ws.send(json.dumps({
+                        "type": "error",
+                        "message": error_msg
+                    }))
+                    continue
+   
+            
+                # 移除手牌中已出的牌
+                for c in cards:
+                    player.hand.remove(c)
+            
+                # 广播出牌信息
+                await manager.broadcast(room, {
+                    "type": "play_card",
+                    "player_id": player.player_id,
+                    "player_number": player.player_number,
+                    "player_name": player.nickname or f"玩家 {player.player_number}",
+                    "cards": cards
+                })
+            
+                # 更新自己的手牌显示
+                await ws.send(json.dumps({
+                    "type": "your_hand",
+                    "hand": player.hand
+                }))
+                
+                # ✅ 所有玩家都出过牌，进入结算阶段
+                if len(set(pn for pn, _, _ in trick.play_sequence)) == 4:
+                    winner, max_card, team_id, points = trick.resolve()
+            
+                    await manager.broadcast(room, {
+                        "type": "trick_done",
+                        "winner_player_number": winner,
+                        "winning_card": max_card,
+                        "winning_team_id": team_id,
+                        "points": points
+                    })
+            
+                    # 新 Trick，胜者先出
+                    new_trick = Trick(
+                        trick_number=trick.trick_number + 1,
+                        starting_player_index=winner,
+                        winning_team_id=team_id
+                    )
+#                    room.active_game.current_deal.tricks.append(new_trick)
+                    trick_list.append(new_trick)
+                print(f"出完牌后, {trick.trick_number=}, {trick.play_sequence=}")
+            
 
             elif data["type"] == "hide_cards":
                 cards = data["cards"]

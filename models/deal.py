@@ -3,12 +3,8 @@ from typing import List, Optional, Tuple, Dict
 from .team import Team
 from .enums import Rank
 
-@dataclass
-class Trick:
-    """表示一轮出牌（4人各出一张）的结果"""
-    trick_number: int
-    winning_team_id: Optional[int]
-    points: int = 0
+from .trick import Trick
+
 
 @dataclass
 class Deal:
@@ -52,7 +48,10 @@ class Deal:
             next_dealer = self.challenger_team
         else:
             # 挑战失败，庄家主数+1
-            self.dealer_team.promote_trump()
+            result = self.dealer_team.promote_trump()
             next_dealer = self.dealer_team
+        
+        if result == "victory":
+            print("🏁 游戏结束，庄家完全胜利！")
 
         return scores, next_dealer, next_dealer.trump_rank

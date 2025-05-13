@@ -14,7 +14,11 @@ class Team:
     is_dealer: bool = False        # 是否为当前庄家
 
     def promote_trump(self):
-        """如果庄家赢了一局，主数 +1（循环回到最小）"""
+        """如果庄家赢了一局，主数 +1（若已是最大则宣布胜利）"""
         all_ranks = list(Rank)
-        idx = all_ranks.index(self.trump_rank)
-        self.trump_rank = all_ranks[(idx + 1) % len(all_ranks)]
+        idx = all_ranks.index(self.trump_rank)        
+        if self.trump_rank == Rank.A:
+            return "victory"
+        
+        self.trump_rank = all_ranks[idx + 1]
+

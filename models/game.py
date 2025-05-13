@@ -3,7 +3,6 @@ from dataclasses import dataclass, field
 from typing import List, Dict, Optional
 from .player import Player
 from .team import Team
-from .enums import Rank
 from .deal import Deal
 
 @dataclass
@@ -26,8 +25,8 @@ class Game:
     def __post_init__(self):
         """初始化：把 4 个玩家分为两个队"""
         assert len(self.players) == 4
-        self.teams[0].members = self.players[:2]
-        self.teams[1].members = self.players[2:]
+        self.teams[0].members = [self.players[0], self.players[2]]
+        self.teams[1].members = [self.players[1], self.players[3]]
         self.teams[0].is_dealer = True  # 默认 0 队为庄
 
     @property
