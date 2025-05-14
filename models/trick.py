@@ -28,10 +28,10 @@ class Trick:
     
         # 获取首出玩家出的所有牌
         lead_cards = [card for pn, card, _ in self.play_sequence if pn == lead_player_number]
-    
+        lead_count = len(lead_cards)
         # 出牌数量必须一致
         if len(cards) != len(lead_cards):
-            return False
+            return False, "出牌数量不一致"
     
         lead_rep_card = self.valid_play_sequence[0][1]
         lead_value = Cards.card_value(lead_rep_card, self.trump_rank, self.trump_suit)
@@ -46,11 +46,20 @@ class Trick:
             main_cards = [c for c in player_cards if Cards.card_value(c, self.trump_rank, self.trump_suit) >= 100]
             required_cards = main_cards
     
-        # 如果有必须出的牌，就必须全出
-        for rc in required_cards:
-            if rc not in cards:
-                return False
-        return True
+        required_count = len(required_cards)
+        
+        if required_count >= lead_count:
+            # 必须出 lead_count 张 required 类型牌
+            actual_required = [c for c in cards if c in required_cards]
+            if len(actual_required) < lead_count:
+                return False, "需要全部跟花！"
+        else:
+            # 必须把所有 required 类型牌都打出去
+            for rc in required_cards:
+                if rc not in cards:
+                    return False, "手中还有必须出的花色！"
+        
+        return True, None
     
     
     def record_play(self, player: Player, cards: List[str], trump_rank: str, trump_suit: str) -> Optional[str]:
@@ -71,8 +80,9 @@ class Trick:
     
         else:
             # 非首出：必须跟花
-            if not self.is_following_legally(player, cards):
-                return "❌ 出牌必须跟首家花色！"
+            bo, msg = self.is_following_legally(player, cards)
+            if not bo:
+                return msg
     
             # 检查牌型是否符合规则（比如两张必须完全相同等）
             valid, representative = Cards.is_valid_combo(cards, trump_rank, trump_suit)
