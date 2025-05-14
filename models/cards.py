@@ -51,6 +51,31 @@ class Cards:
         return card[-1]
 
     @staticmethod
+    def sort_hand(hand: List[str], rank_input: str, suit_input: str) -> List[str]:
+        # 定义花色权重
+        suit_weights = {}
+
+        if suit_input == "♠":
+            suit_weights = {"♥": 0.001, "♣": 0.01, "♦": 0.1, "♠": 1}
+        elif suit_input == "♥":
+            suit_weights = {"♠": 0.001, "♦": 0.01, "♣": 0.1, "♥": 1}
+        elif suit_input == "♣":
+            suit_weights = {"♥": 0.001, "♠": 0.01, "♦": 0.1, "♣": 1}
+        else:  # ♦
+            suit_weights = {"♠": 0.001, "♥": 0.01, "♣": 0.1, "♦": 1}
+
+        def get_sort_value(card):
+            card_val = Cards.card_value(card, rank_input, suit_input)
+            if card_val < 100:  # trump_suit always > 100
+                card_val = card_val * suit_weights[Cards.get_suit(card)]
+            if Cards.get_rank(card) == rank_input:
+                card_val = card_val + math.log(suit_weights[Cards.get_suit(card)])
+            return card_val
+
+        # 使用自定义排序函数
+        return sorted(hand, key=get_sort_value)
+
+    @staticmethod
     def create_deck() -> List[str]:
         """
         创建一副扑克牌（两副），包括大小王。
@@ -142,31 +167,6 @@ class Cards:
         return card_value
 
     @staticmethod
-    def sort_hand(hand: List[str], rank_input: str, suit_input: str) -> List[str]:
-        # 定义花色权重
-        suit_weights = {}
-
-        if suit_input == "♠":
-            suit_weights = {"♥": 0.001, "♣": 0.01, "♦": 0.1, "♠": 1}
-        elif suit_input == "♥":
-            suit_weights = {"♠": 0.001, "♦": 0.01, "♣": 0.1, "♥": 1}
-        elif suit_input == "♣":
-            suit_weights = {"♥": 0.001, "♠": 0.01, "♦": 0.1, "♣": 1}
-        else:  # ♦
-            suit_weights = {"♠": 0.001, "♥": 0.01, "♣": 0.1, "♦": 1}
-
-        def get_sort_value(card):
-            card_val = Cards.card_value(card, rank_input, suit_input)
-            if card_val < 100:  # trump_suit always > 100
-                card_val = card_val * suit_weights[Cards.get_suit(card)]
-            if Cards.get_rank(card) == rank_input:
-                card_val = card_val + math.log(suit_weights[Cards.get_suit(card)])
-            return card_val
-
-        # 使用自定义排序函数
-        return sorted(hand, key=get_sort_value)
-
-    @staticmethod
     def is_valid_combo(
         cards: List[str], trump_rank: str, trump_suit: str
     ) -> Tuple[bool, Optional[str]]:
@@ -184,6 +184,10 @@ class Cards:
             if c == Cards.SUIT_COLOR[trump_suit] and s != trump_suit
         )
         deputy_advisor = f"3{deputy_suit}"
+
+        sorted_ranks = sorted(ranks)
+        sorted_cards = Cards.sort_hand(cards, trump_rank, trump_suit)
+
         if not cards:
             return False, None  # 非法牌型！请重新出牌！
 
@@ -200,14 +204,13 @@ class Cards:
 
             # 三张主数，颜色相同
             if all(r == trump_rank for r in ranks) and same_color:
-                return True, cards[0]
+                return True, sorted_cards[2]
 
             # 三张 advisor，颜色相同
             if all(c in [advisor, deputy_advisor] for c in cards):
                 return True, cards[0]
 
             # 特殊组合，且要求三张牌同花色
-            sorted_ranks = sorted(ranks)
             if same_suit:
                 if trump_rank not in ["K", "A"]:
                     if sorted_ranks in [["A", "K", "K"], ["A", "A", "K"]]:
@@ -231,6 +234,25 @@ class Cards:
             # 四张 advisor，颜色相同
             if all(c in [advisor, deputy_advisor] for c in cards):
                 return True, cards[0]
+
+            # 四张同花色，必须连号（拖拉机）
+            if all(x not in cards for x in ["JOKER1", "JOKER2", "5♥"]):
+                if same_suit:
+                    r1, r2, r3, r4 = sorted_cards
+                    if not (r1 == r2 and r3 == r4):
+                        return False, None  # 不是两对
+
+                    i1 = Cards.RANK_ORDER.index(r3)
+                    i3 = Cards.RANK_ORDER.index(r3)
+                    i_trump = Cards.RANK_ORDER.index(trump_rank)
+
+                    # 1. 紧邻合法
+                    if i3 == i1 + 1:
+                        return True, cards[0]
+
+                    # 2. 中间隔了一个主数合法
+                    if i3 == i1 + 2 and i1 + 1 == i_trump:
+                        return True, cards[0]
 
         return False, None
 
