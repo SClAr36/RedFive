@@ -618,12 +618,11 @@
 
           case "chat":
             addChatMessage(data.player_name, data.content, data.player_name === currentNickname);
-            log.textContent += `💬 ${data.player_name}：${data.content}\n`;
             break;
 
           case "ready_status":
             log.textContent += `🃏 ${data.player_name} 准备好了\n`;
-            roomStatus.textContent = `🃏 ${data.player_name} 已准备，等待发牌...`;
+            /* roomStatus.textContent = `🃏 ${data.player_name} 已准备，等待发牌...`; */
             break;
 
           case "deal_start":
@@ -732,7 +731,7 @@
     function Ready() {
       ws.send(JSON.stringify({ type: "ready" }));
       log.textContent += "🃏 你准备好了\n";
-      roomStatus.textContent = "🃏 已准备，等待其他玩家...";
+      //roomStatus.textContent = "🃏 已准备，等待其他玩家...";
     }
 
     function dealCards() {
