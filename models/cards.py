@@ -52,6 +52,22 @@ class Cards:
 
     @staticmethod
     def sort_hand(hand: List[str], rank_input: str, suit_input: str) -> List[str]:
+        def trump_card_weights(x):
+            """
+            主数花色要求相连, 将输入值 x 转换，使得序列 [0.001, 0.01, 0.1, 1] 变换后按大小排序为 [0.001, 0.1, 0.01, 1]
+            """
+
+            if x == 0.001:
+                return 0.001  # 保持最小
+            elif x == 0.01:
+                return 0.1  # 变大，成为第三位
+            elif x == 0.1:
+                return 0.01  # 变小，成为第二位
+            elif x == 1:
+                return 1  # 保持最大
+            else:
+                return x  # 其他值保持不变
+
         # 定义花色权重
         suit_weights = {}
 
@@ -69,7 +85,9 @@ class Cards:
             if card_val < 100:  # trump_suit always > 100
                 card_val = card_val * suit_weights[Cards.get_suit(card)]
             if Cards.get_rank(card) == rank_input:
-                card_val = card_val + math.log(suit_weights[Cards.get_suit(card)])
+                card_val = card_val + trump_card_weights(
+                    suit_weights[Cards.get_suit(card)]
+                )
             return card_val
 
         # 使用自定义排序函数
