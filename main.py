@@ -4,7 +4,6 @@ import websockets
 from typing import List
 
 from room_manager import RoomManager
-from models.enums import Rank, RANK_STR_TO_ENUM
 from models.cards import Cards
 from models.trick import Trick
 from models.deal import Deal

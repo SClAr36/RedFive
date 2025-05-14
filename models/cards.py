@@ -205,17 +205,16 @@ class Cards:
 
         sorted_ranks = sorted(ranks)
         sorted_cards = Cards.sort_hand(cards, trump_rank, trump_suit)
-
-        if not cards:
-            return False, None  # 非法牌型！请重新出牌！
+        
+        counts = {r: ranks.count(r) for r in set(ranks)}
 
         if len(cards) == 1:
             return True, cards[0]
 
-        if len(cards) == 2:
+        elif len(cards) == 2:
             return (True, cards[0]) if cards[0] == cards[1] else (False, None)
 
-        if len(cards) == 3:
+        elif len(cards) == 3:
             # 三张 Joker
             if all(r in Cards.JOKERS for r in cards):
                 return True, cards[0]
@@ -254,24 +253,81 @@ class Cards:
                 return True, cards[0]
 
             # 四张同花色，必须连号（拖拉机）
-            if all(x not in cards for x in ["JOKER1", "JOKER2", "5♥"]):
-                if same_suit:
-                    r1, r2, r3, r4 = sorted_cards
-                    if not (r1 == r2 and r3 == r4):
-                        return False, None  # 不是两对
+            if same_suit and all(x not in cards for x in ["JOKER1", "JOKER2", "5♥"]) and trump_rank not in ranks:
+                r1, r2, r3, r4 = sorted_cards
+                if not (r1 == r2 and r3 == r4):
+                    return False, None  # 不是两对
 
-                    i1 = Cards.RANK_ORDER.index(r3)
-                    i3 = Cards.RANK_ORDER.index(r3)
-                    i_trump = Cards.RANK_ORDER.index(trump_rank)
+                i1 = Cards.RANK_ORDER.index(r3)
+                i3 = Cards.RANK_ORDER.index(r3)
 
-                    # 1. 紧邻合法
-                    if i3 == i1 + 1:
-                        return True, cards[0]
+                # 1. 紧邻合法
+                if i3 == i1 + 1:
+                    return True, cards[0]
 
-                    # 2. 中间隔了一个主数合法
-                    if i3 == i1 + 2 and i1 + 1 == i_trump:
-                        return True, cards[0]
+                # 2. 中间隔了一个主数合法
+                if i3 == i1 + 2 and i1 + 1 == i_trump:
+                    return True, cards[0]
+            
+        # …（前面已有的 1~4 张牌判断）…
 
+        elif len(cards) == 6:
+            unique_ranks = sorted(counts.keys(), key=lambda r: Cards.RANK_ORDER.index(r))
+            idxs = [Cards.RANK_ORDER.index(r) for r in unique_ranks]
+            i_trump = Cards.RANK_ORDER.index(trump_rank)
+
+            # 六张同花色三对拖拉机（允许隔一个主数）
+            # 1) 同一花色，且不含大小王和 5♥
+            if same_suit and all(c not in Cards.JOKERS and c != "5♥" for c in cards):
+                # 2) 不含主数
+                if trump_rank not in ranks:
+                    # 3) 恰好三种点数，每种正好两张
+                    if len(counts) == 3 and all(v == 2 for v in counts.values()):
+                        # 4) 按大小排序后的唯一点数
+                        # 5) 检查是否是连续三对，或中间隔一个主数
+                        cond_adjacent = (idxs[1] - idxs[0] == 1 and
+                                         idxs[2] - idxs[1] == 1)
+                        cond_skip1 = (idxs[1] - idxs[0] == 1 and
+                                      idxs[2] - idxs[1] == 2 and
+                                      idxs[1] + 1 == i_trump)
+                        cond_skip0 = (idxs[1] - idxs[0] == 2 and
+                                      idxs[0] + 1 == i_trump and
+                                      idxs[2] - idxs[1] == 1)
+                        if cond_adjacent or cond_skip1 or cond_skip0:
+                            # 代表牌这里暂且返回第一张，或按需改为最大对子的一张
+                            return True, cards[0]
+        
+        elif len(cards) == 8:
+            unique_ranks = sorted(counts.keys(), key=lambda r: Cards.RANK_ORDER.index(r))
+            idxs = [Cards.RANK_ORDER.index(r) for r in unique_ranks]
+            i_trump = Cards.RANK_ORDER.index(trump_rank)        
+            if same_suit and all(c not in Cards.JOKERS and c != "5♥" for c in cards):
+                # 2) 不含主数
+                if trump_rank not in ranks:
+                    # 3) 恰好四种点数，每种正好两张
+                    if len(counts) == 4 and all(v == 2 for v in counts.values()):
+                        # 4) 按大小排序后的唯一点数
+                        # 5) 检查是否是连续三对，或中间隔一个主数
+                        cond_adjacent = (idxs[1] - idxs[0] == 1 and
+                                         idxs[2] - idxs[1] == 1 and
+                                         idxs[3] - idxs[2] == 1)
+                        cond_skip2 = (idxs[1] - idxs[0] == 1 and
+                                      idxs[2] - idxs[1] == 1 and
+                                      idxs[3] - idxs[2] == 2 and
+                                      idxs[2] + 1 == i_trump)
+                        cond_skip1 = (idxs[1] - idxs[0] == 1 and
+                                      idxs[2] - idxs[1] == 2 and
+                                      idxs[1] + 1 == i_trump and
+                                      idxs[3] - idxs[2] == 1)
+                        cond_skip0 = (idxs[1] - idxs[0] == 2 and
+                                      idxs[0] + 1 == i_trump and
+                                      idxs[2] - idxs[1] == 1 and
+                                      idxs[3] - idxs[2] == 1)
+                        if cond_adjacent or cond_skip2 or cond_skip1 or cond_skip0:
+                            # 代表牌这里暂且返回第一张，或按需改为最大对子的一张
+                            return True, cards[0]
+
+        # 最后一行：所有情况都不符合时
         return False, None
 
 
