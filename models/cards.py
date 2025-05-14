@@ -206,7 +206,8 @@ class Cards:
         deputy_suit = next(s for s, c in Cards.SUIT_COLOR.items() if c == Cards.SUIT_COLOR[trump_suit] and s != trump_suit)
         deputy_advisor = f"3{deputy_suit}"
 
-        sorted_ranks = Cards.sort_hand(ranks, trump_rank, trump_suit)
+        sorted_ranks = sorted(ranks)
+        sorted_cards = Cards.sort_hand(cards, trump_rank, trump_suit)
         
         if not cards:
             return False, None #非法牌型！请重新出牌！
@@ -224,7 +225,7 @@ class Cards:
     
             # 三张主数，颜色相同
             if all(r == trump_rank for r in ranks) and same_color:
-                return True, cards[0]
+                return True, sorted_cards[2]
     
             # 三张 advisor，颜色相同
             if all(c in [advisor, deputy_advisor] for c in cards):
@@ -233,13 +234,13 @@ class Cards:
             # 特殊组合，且要求三张牌同花色
             if same_suit:
                 if trump_rank not in ['K', 'A']:
-                    if sorted_ranks in [['K', 'K', 'A'], ['K', 'A', 'A']]:
+                    if sorted_ranks in [['A', 'K', 'K'], ['A', 'A', 'K']]:
                         return True, cards[0]
                 elif trump_rank == 'K':
-                    if sorted_ranks in [['Q', 'Q', 'A'], ['Q', 'A', 'A']]:
+                    if sorted_ranks in [['A', 'Q', 'Q'], ['A', 'A', 'Q']]:
                         return True, cards[0]
                 elif trump_rank == 'A':
-                    if sorted_ranks in [['Q', 'Q', 'K'], ['Q', 'K', 'K']]:
+                    if sorted_ranks in [['K', 'Q', 'Q'], ['K', 'K', 'Q']]:
                         return True, cards[0]
         
         if len(cards) == 4:
@@ -257,7 +258,7 @@ class Cards:
             
             # 四张同花色，必须连号（拖拉机）
             if same_suit:
-                r1, r2, r3, r4 = sorted_ranks
+                r1, r2, r3, r4 = sorted_cards
                 if not (r1 == r2 and r3 == r4):
                     return False, None  # 不是两对
             
