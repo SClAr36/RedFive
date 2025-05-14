@@ -23,22 +23,35 @@ class Trick:
         return len(self.play_sequence) == 0
     
     def is_following_legally(self, player: Player, cards: List[str]) -> bool:
-        """
-        判断非首出玩家是否符合跟牌规则：
-        - 如果有和首家相同花色的牌，必须跟同花色
-        - 否则可自由出牌
-        """
-        # if not self.play_sequence:
-        #     return True  # 首出无需跟
+        # 获取首出玩家编号
+        lead_player_number = self.play_sequence[0][0]
     
-        # lead_card = self.play_sequence[0][1]
-        # lead_suit = Cards.get_suit(lead_card)
-        # player_suits = [Cards.get_suit(c) for c in player.hand]
+        # 获取首出玩家出的所有牌
+        lead_cards = [card for pn, card, _ in self.play_sequence if pn == lead_player_number]
     
-        # if lead_suit in player_suits:
-        #     return all(Cards.get_suit(c) == lead_suit for c in cards)
+        # 出牌数量必须一致
+        if len(cards) != len(lead_cards):
+            return False
     
-        return True  # 没有 lead_suit 可以出其他
+        lead_rep_card = self.valid_play_sequence[0][1]
+        lead_value = Cards.card_value(lead_rep_card, self.trump_rank, self.trump_suit)
+        lead_suit = Cards.get_suit(lead_rep_card)
+    
+        player_cards = player.hand
+    
+        if lead_value < 100:
+            same_suit_cards = [c for c in player_cards if Cards.get_suit(c) == lead_suit and Cards.card_value(c, self.trump_rank, self.trump_suit) < 100]
+            required_cards = same_suit_cards
+        else:
+            main_cards = [c for c in player_cards if Cards.card_value(c, self.trump_rank, self.trump_suit) >= 100]
+            required_cards = main_cards
+    
+        # 如果有必须出的牌，就必须全出
+        for rc in required_cards:
+            if rc not in cards:
+                return False
+        return True
+    
     
     def record_play(self, player: Player, cards: List[str], trump_rank: str, trump_suit: str) -> Optional[str]:
         """
@@ -80,16 +93,28 @@ class Trick:
         - 累加得分
         返回：(赢家编号, 最大牌, 队伍ID, 总得分)
         """
+        # 获取首家代表牌的花色和数值
+        lead_card = self.valid_play_sequence[0][1]
+        lead_value = Cards.card_value(lead_card, self.trump_rank, self.trump_suit)
+        lead_suit = Cards.get_suit(lead_card)
     
-        # 找出最大牌
+        # 定义调整后的比较值
+        def adjust(card: str) -> int:
+            val = Cards.card_value(card, self.trump_rank, self.trump_suit)
+            if lead_value < 100 and Cards.get_suit(card) == lead_suit and val < 100:
+                return val + 20
+            return val
+    
+        # 找出最大牌对应的玩家、牌和队伍
         winner_number, winning_card, winning_team = max(
-            self.valid_play_sequence, key=lambda x: Cards.card_value(x[1], self.trump_rank, self.trump_suit)
+            self.valid_play_sequence,
+            key=lambda x: adjust(x[1])
         )
     
         self.winning_player_number = winner_number
         self.winning_team_id = winning_team
     
-        # 统计得分
+        # 累加所有出牌的得分
         self.points = sum(
             5 if Cards.get_rank(card) == '5' else
             10 if Cards.get_rank(card) in ['10', 'K'] else 0
@@ -97,7 +122,7 @@ class Trick:
         )
     
         return winner_number, winning_card, winning_team, self.points
-    
+        
     
 
 
