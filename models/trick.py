@@ -52,7 +52,7 @@ class Trick:
             # 必须出 lead_count 张 required 类型牌
             actual_required = [c for c in cards if c in required_cards]
             if len(actual_required) < lead_count:
-                return False, "需要全部跟花！"
+                return False, "需要出同样花色的牌！"
         else:
             # 必须把所有 required 类型牌都打出去
             for rc in required_cards:

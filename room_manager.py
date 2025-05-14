@@ -39,9 +39,10 @@ class RoomManager:
         player_index = len(room.players) - 1
         if player_index in [0, 2]:
             room.teams[0].members.append(player)
+            player.team_id = 0
         else:
             room.teams[1].members.append(player)
-
+            player.team_id = 1
         return player
 
     def get_room(self, ws) -> Room:
