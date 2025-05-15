@@ -207,6 +207,7 @@ class Cards:
         sorted_cards = Cards.sort_hand(cards, trump_rank, trump_suit)
         
         counts = {r: ranks.count(r) for r in set(ranks)}
+        i_trump = Cards.RANK_ORDER.index(trump_rank)
 
         if len(cards) == 1:
             return True, cards[0]
@@ -254,27 +255,22 @@ class Cards:
 
             # 四张同花色，必须连号（拖拉机）
             if same_suit and all(x not in cards for x in ["JOKER1", "JOKER2", "5♥"]) and trump_rank not in ranks:
-                r1, r2, r3, r4 = sorted_cards
-                if not (r1 == r2 and r3 == r4):
-                    return False, None  # 不是两对
-
-                i1 = Cards.RANK_ORDER.index(r3)
-                i3 = Cards.RANK_ORDER.index(r3)
-
-                # 1. 紧邻合法
-                if i3 == i1 + 1:
-                    return True, cards[0]
-
-                # 2. 中间隔了一个主数合法
-                if i3 == i1 + 2 and i1 + 1 == i_trump:
-                    return True, cards[0]
-            
-        # …（前面已有的 1~4 张牌判断）…
+                # 1) 两种点数各两张
+                if len(counts) == 2 and all(v == 2 for v in counts.values()):
+                    # 按照 RANK_ORDER 排序唯一点数
+                    unique = sorted(counts.keys(),
+                                    key=lambda r: Cards.RANK_ORDER.index(r))
+                    i0, i1 = (Cards.RANK_ORDER.index(r) for r in unique)
+                    # 2) 紧邻
+                    if i1 == i0 + 1:
+                        return True, cards[0]
+                    # 3) 隔一个主数
+                    if i1 == i0 + 2 and i0 + 1 == i_trump:
+                        return True, cards[0]
 
         elif len(cards) == 6:
             unique_ranks = sorted(counts.keys(), key=lambda r: Cards.RANK_ORDER.index(r))
             idxs = [Cards.RANK_ORDER.index(r) for r in unique_ranks]
-            i_trump = Cards.RANK_ORDER.index(trump_rank)
 
             # 六张同花色三对拖拉机（允许隔一个主数）
             # 1) 同一花色，且不含大小王和 5♥
@@ -332,18 +328,20 @@ class Cards:
 
 
 # -------------------- 运行示例 --------------------
-if __name__ == "__main__":
-    # 获取用户输入的主数和主花色
-    rank_input = input("choose the prime number: ")
-    suit_input = input("choose the prime suit: ")
+# if __name__ == "__main__":
+#     # 获取用户输入的主数和主花色
+#     rank_input = input("choose the prime number: ")
+#     suit_input = input("choose the prime suit: ")
 
-    # 调用发牌并排序函数
-    hidden, players = Cards.deal_and_sort(rank_input, suit_input)
+#     # 调用发牌并排序函数
+#     hidden, players = Cards.deal_and_sort(rank_input, suit_input)
 
-    # 输出最初抽出的 8 张牌
-    print("最初抽出的 8 张牌：", hidden)
+#     # 输出最初抽出的 8 张牌
+#     print("最初抽出的 8 张牌：", hidden)
 
-    # 输出每个玩家的排序后手牌
-    for i in range(4):
-        print(f"\n玩家 {i} 的排序后手牌（共 {len(players[i])} 张）：")
-        print(players[i])
+#     # 输出每个玩家的排序后手牌
+#     for i in range(4):
+#         print(f"\n玩家 {i} 的排序后手牌（共 {len(players[i])} 张）：")
+#         print(players[i])
+
+print(Cards.is_valid_combo(["10♣", "10♣", "J♣", "J♣", "Q♣", "Q♣"], trump_rank = "6", trump_suit = "♠"))
