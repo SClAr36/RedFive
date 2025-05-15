@@ -93,7 +93,7 @@ class Trick:
         for card in cards:
             self.play_sequence.append((player.player_number, card, player.team_id))
     
-        return None    
+        return expected
             
     def resolve(self) -> Tuple[int, str, int, int]:
         """

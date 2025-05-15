@@ -233,7 +233,7 @@ async def handler(ws):
                 trump_suit = deal.trump_suit
                 # 使用 Trick 内部的出牌记录逻辑
                 error_msg = trick.record_play(player, cards, trump_rank, trump_suit)
-                if error_msg:
+                if error_msg not in range(4):
                     await ws.send(json.dumps({
                         "type": "error",
                         "message": error_msg
@@ -250,7 +250,8 @@ async def handler(ws):
                     "player_id": player.player_id,
                     "player_number": player.player_number,
                     "player_name": player.nickname or f"玩家 {player.player_number}",
-                    "cards": cards
+                    "cards": cards,
+                    "expected_player": (error_msg + 1) % 4
                 })
             
                 # 更新自己的手牌显示

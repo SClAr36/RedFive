@@ -722,7 +722,7 @@
             break;
 
           case "play_card":
-            playLog.textContent += `🕹️ ${data.player_name} 出了牌：${data.cards.join(", ")}\n`;
+            playLog.textContent += `🕹️ ${data.player_name} 出了牌：${data.cards.join(", ")}\n下一个出牌的玩家是${data.expected_player}\n`;
             break;
 
           case "trick_done":
