@@ -141,11 +141,15 @@ async def handler(ws):
                         for p in room.players
                     ]
                 })
+
             elif data["type"] == "clear_team":
                 for p in room.players:
                     p.team_id = None
                 room.teams[0].members = []
                 room.teams[1].members = []
+                await manager.broadcast(room, {
+                    "type": "team_cleared"
+                })
 
             elif data["type"] == "deal_cards":
                 if len(room.players) < 4:

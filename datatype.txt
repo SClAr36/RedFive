@@ -15,6 +15,11 @@ funtion selectTeam(teamId)
     ]
 请更新在房间日志或是room-status里
 
+点击撤销分队后，前端收到消息{
+    "type": "team_cleared"
+                }
+
+
 每个trick结束后后端broadcast现更新为：
 {
     "type": "trick_done",
