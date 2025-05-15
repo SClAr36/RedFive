@@ -191,7 +191,9 @@ class Cards:
         ranks = [Cards.get_rank(c) for c in cards]
         suits = [Cards.get_suit(c) for c in cards]
         colors = [Cards.SUIT_COLOR.get(s, "") for s in suits]
-
+        trump_color = Cards.SUIT_COLOR[trump_suit]
+        i_trump = Cards.RANK_ORDER.index(trump_rank)
+        
         same_color = len(set(colors)) == 1
         same_suit = len(set(suits)) == 1
 
@@ -199,7 +201,7 @@ class Cards:
         deputy_suit = next(
             s
             for s, c in Cards.SUIT_COLOR.items()
-            if c == Cards.SUIT_COLOR[trump_suit] and s != trump_suit
+            if c == trump_color and s != trump_suit
         )
         deputy_advisor = f"3{deputy_suit}"
 
@@ -207,7 +209,6 @@ class Cards:
         sorted_cards = Cards.sort_hand(cards, trump_rank, trump_suit)
         
         counts = {r: ranks.count(r) for r in set(ranks)}
-        i_trump = Cards.RANK_ORDER.index(trump_rank)
 
         if len(cards) == 1:
             return True, cards[0]
@@ -261,12 +262,27 @@ class Cards:
                     unique = sorted(counts.keys(),
                                     key=lambda r: Cards.RANK_ORDER.index(r))
                     i0, i1 = (Cards.RANK_ORDER.index(r) for r in unique)
-                    # 2) 紧邻
-                    if i1 == i0 + 1:
-                        return True, cards[0]
-                    # 3) 隔一个主数
-                    if i1 == i0 + 2 and i0 + 1 == i_trump:
-                        return True, cards[0]
+                    if colors[0] != trump_color:                        
+                        # 紧邻
+                        if i1 == i0 + 1:
+                            return True, cards[0]
+                        # 隔一个主数
+                        if i1 == i0 + 2 and i0 + 1 == i_trump:
+                            return True, cards[0]
+                    else: # 若和主花色相同，需隔一个参谋判定合法
+                        if "3" not in ranks:
+                            if i1 == i0 + 1:
+                                return True, cards[0]
+                            # 隔一个主数
+                            if i1 == i0 + 2 and i0 + 1 == i_trump:
+                                return True, cards[0]
+                            if trump_rank != "4":
+                                if i0 == 2 and i1 == 4:
+                                    return True, cards[0]
+                            else:
+                                if i0 == 2 and i1 == 5:
+                                    return True, cards[0]
+                        
 
         elif len(cards) == 6:
             unique_ranks = sorted(counts.keys(), key=lambda r: Cards.RANK_ORDER.index(r))
