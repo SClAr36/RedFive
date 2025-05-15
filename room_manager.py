@@ -34,15 +34,6 @@ class RoomManager:
         player = Player(player_id=str(uuid.uuid4())[:8])
         room.players.append(player)
         self.ws_to_player[ws] = player
-        
-        # 👇 默认分队逻辑
-        player_index = len(room.players) - 1
-        if player_index in [0, 2]:
-            room.teams[0].members.append(player)
-            player.team_id = 0
-        else:
-            room.teams[1].members.append(player)
-            player.team_id = 1
         return player
 
     def get_room(self, ws) -> Room:

@@ -208,7 +208,7 @@ def test_card_value():
 
 
 def test_is_valid_combo():
-    trump_rank = "5"
+    trump_rank = "6"
     trump_suit = "♠"
 
     # Test single card
@@ -226,9 +226,9 @@ def test_is_valid_combo():
     ) == (True, "JOKER1")
 
     # Test three trump rank cards with same color
-    assert Cards.is_valid_combo(["5♠", "5♠", "5♣"], trump_rank, trump_suit) == (
+    assert Cards.is_valid_combo(["6♠", "6♠", "6♣"], trump_rank, trump_suit) == (
         True,
-        "5♠",
+        "6♠",
     )
 
     # Test three advisors with same color
@@ -249,6 +249,22 @@ def test_is_valid_combo():
         None,
     )
 
+    # Test four valid combination
+    assert Cards.is_valid_combo(["5♣", "5♣", "7♣", "7♣"], trump_rank,trump_suit) ==(
+        True,
+        "5"
+    ) 
+    
+    assert Cards.is_valid_combo(["8♠", "8♠", "9♠", "9♠"], trump_rank,trump_suit) ==(
+        True,
+        "5"
+    ) 
+
+    assert Cards.is_valid_combo(["J♠", "J♠", "Q♠", "Q♠"], trump_rank,trump_suit) ==(
+        True,
+        "5"
+    )
+        
     # Test empty list
     assert Cards.is_valid_combo([], trump_rank, trump_suit) == (False, None)
 

@@ -529,6 +529,10 @@
     <!-- 中间：手牌区 -->
     <div class="card-area">
       <div class="game-prepare">
+        <button onclick="selectTeam(0)">加入队伍 A</button>
+        <button onclick="selectTeam(1)">加入队伍 B</button>
+        <button onclick="updateTeam()">分队</button>
+        <button onclick="clearTeam()">撤销选队</button>
         <button onclick="Ready()">准备</button>
         <button onclick="promptTrump()">发牌</button>
       </div>
@@ -728,6 +732,18 @@
       chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
+    function selectTeam(teamId) {
+      ws.send(JSON.stringify({ type: "select_team", team_id: teamId }));
+    }
+
+    function updateTeam() {
+      ws.send(JSON.stringify({ type: "team_update" }));
+    }
+
+    function clearTeam() {
+      ws.send(JSON.stringify({ type: "clear_team" }));
+    }
+    
     function Ready() {
       ws.send(JSON.stringify({ type: "ready" }));
       log.textContent += "🃏 你准备好了\n";

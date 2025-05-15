@@ -16,10 +16,6 @@ class Deal:
     trump_suit: str                          # 主花色（例如 '♠'）
     tricks: List[Trick] = field(default_factory=list)  # 每轮 trick 记录
 
-    def add_trick_result(self, winning_team_id: Optional[int], points: int):
-        """记录一轮 trick 的结果"""
-        self.tricks.append(Trick(winning_team_id, points))
-
     def get_team_points(self) -> Dict[int, int]:
         """统计两支队伍的得分"""
         result = {

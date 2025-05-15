@@ -1,0 +1,32 @@
+在前端增加了两个选队按钮:
+funtion selectTeam(teamId)
+    type: "select_team" 
+    team_id: teamId
+
+点击分队键（现在函数是start_game）后，更新成员队伍及序号
+后端收到后broadcast:
+    "type": "team_update",
+    "players": [
+        {"player_id": u.player_id, "team_id": u.team_id, "player_number": u.player_number}
+        for u in room.players
+    ]
+请更新在房间日志或是room-status里
+
+每个trick结束后后端broadcast现更新为：
+{
+    "type": "trick_done",
+    "winner_player_number": winner,
+    "winning_card": max_card,
+    "winning_team_id": team_id,
+    "trick_points": points,
+    "result": {
+        dealer_team.team_id(庄家队号：0 或 1): points,
+        challenger_team.team_id（擂队队号：0 或 1） : points
+    }
+}
+
+
+bug如果只有一些人选队某些队伍人数就会超出上限
+拖拉机6张及以上跳过参谋没写。8张主数。
+    统一写法：在rankorder里去掉参谋和主数
+一键disable 所有判断
