@@ -195,7 +195,7 @@ async def handler(ws):
                 deal.deal_number += 1
                 deal.trump_rank=rank_input
                 deal.trump_suit=suit_input
-                deal.tricks.append(Trick(trump_rank=deal.trump_rank, trump_suit=deal.trump_suit, starting_player_index=0))
+                deal.tricks = [Trick(trump_rank=deal.trump_rank, trump_suit=deal.trump_suit, starting_player_index=0)]
                 deal.dealer_team = room.teams[0]
                 deal.challenger_team = room.teams[1]
 

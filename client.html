@@ -659,7 +659,8 @@
             break;
 
           case "trick_done":
-            playLog.textContent += `🎉 本轮 玩家 ${data.winner_player_number} 赢得了本轮！${data.winning_team_id} 队获得了 ${data.points} 分！\n`;
+            playLog.textContent += `🎉 本轮 玩家 ${data.winner_player_number} 赢得了本轮！${data.winning_team_id} 队获得了 ${data.trick_points} 分！\n` +
+            `${JSON.stringify(data.result, null, 2)}\n`;
             break;
 
           case "error":
