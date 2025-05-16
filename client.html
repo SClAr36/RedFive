@@ -212,6 +212,17 @@
       margin-bottom: 12px;
     }
 
+    /* 牌花色颜色 */
+    .play-log-content .card-heart,
+    .play-log-content .card-diamond {
+      color: #FF5A5F;
+    }
+    
+    .play-log-content .card-spade,
+    .play-log-content .card-club {
+      color: #3A3A3A;
+    }
+
     /* ---------- 得分显示区 ---------- */
     .score-display {
       display: flex;
@@ -355,7 +366,7 @@
       border-radius: 24px;
       cursor: pointer;
       transition: all 0.3s;
-      font-weight: 500;
+      font-weight: 5 00;
       font-size: 14px;
       box-shadow: 0 2px 6px rgba(255, 154, 162, 0.3);
     }
@@ -726,11 +737,18 @@
             break;
 
           case "play_card":
-            playLog.textContent += `🕹️ ${data.player_name} 出了牌：${data.cards.join(", ")}\n下一个出牌的玩家是${data.expected_player}\n`;
+            const cardsHtml = data.cards.map(card => {
+              const suit = card.slice(-1);
+              const className = suit === '♥' ? 'card-heart' : 
+                               suit === '♦' ? 'card-diamond' :
+                               suit === '♠' ? 'card-spade' : 'card-club';
+              return `<span class="${className}">${card}</span>`;
+            }).join(", ");
+            playLog.innerHTML += `🕹️ ${data.player_name} 出了牌：${cardsHtml}<br>下一个出牌的玩家是${data.expected_player}\n`;
             break;
 
           case "trick_done":
-            playLog.textContent += `🎉 本轮 玩家 ${data.winner_player_number} 赢得了本轮！${data.winning_team_id} 队获得了 ${data.trick_points} 分！\n`;
+            playLog.innerHTML += `🎉 本轮 玩家 ${data.winner_player_number} 赢得了本轮！${data.winning_team_id} 队获得了 ${data.trick_points} 分！\n`;
             // 更新分数
             if (data.result) {
               teamAScore.textContent = data.result[0] || 0;
