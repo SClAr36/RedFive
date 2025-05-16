@@ -1,7 +1,9 @@
 import asyncio
 import json
 import websockets
+import random
 from typing import List
+
 
 from room_manager import RoomManager
 from models.cards import Cards
@@ -9,6 +11,7 @@ from models.trick import Trick
 from models.deal import Deal
 from models.team import Team
 from models.player import Player
+from models.enums import Rank, RANK_STR_TO_ENUM
 
 
 manager = RoomManager()
@@ -151,6 +154,62 @@ async def handler(ws):
                     "type": "team_cleared"
                 })
 
+            # ———— 点击“开始游戏”后的两种模式 ————
+            if data["type"] == "start_game_default":
+                # 1) 创建新一局 Game（默认各队 trump_rank＝Rank.TWO）
+                room.start_new_game({0:room.teams[0].members,1:room.teams[1].members})
+                # 2) 随机选一个 suit 并启动第一个 Deal
+                room.teams[0].trump_rank = 2
+                room.teams[1].trump_rank = 2
+                suit = random.choice(['♠','♥','♣','♦'])
+                room.active_game.start_new_deal(suit, room.teams[0], room.teams[1])
+                room.active_game.current_deal.dealer_team = room.teams[0]
+                room.active_game.current_deal.challenger_team = room.teams[1]
+                # 3) 广播发牌开始
+                await manager.broadcast(room, {
+                    "type": "deal_start",
+                    "rank_input": room.active_game.current_deal.trump_rank,
+                    "suit_input": suit
+                })
+        
+            elif data["type"] == "start_game_choose_trump":
+                # 1) 先构造 Game（占位），但不立刻发牌
+                room.start_new_game()
+                # 2) 请求客户端弹出主数输入框
+                await manager.broadcast(room, {"type": "prompt_trump"})
+        
+            elif data["type"] == "set_team_trump":
+                # 客户端返回所选主数
+                rank_str = data["rank"]
+                rank_enum = RANK_STR_TO_ENUM[rank_str]
+                # 红五中主数是全局，设置所有队伍的 trump_rank
+                for t in room.teams.values():
+                    t.trump_rank = rank_enum
+                await manager.broadcast(room, {
+                    "type": "team_trump_set",
+                    "trump_rank": rank_enum.name
+                })
+                # 设完主数后，下一步请客户端选庄家
+                await manager.broadcast(room, {"type": "prompt_dealer"})
+        
+            elif data["type"] == "set_dealer":
+                # 客户端返回要做庄的队伍 ID
+                dealer_team_id = data["team_id"]
+                # 更新 Game 里哪个队是庄家
+                for tid, t in room.teams.items():
+                    t.is_dealer = (tid == dealer_team_id)
+                await manager.broadcast(room, {
+                    "type": "dealer_set",
+                    "dealer_team_id": dealer_team_id
+                })
+                # 庄家确定后，正式启动第一局 Deal
+                suit = random.choice(['♠','♥','♣','♦'])
+                room.active_game.start_new_deal(suit)
+                await manager.broadcast(room, {
+                    "type": "deal_start",
+                    "rank_input": room.active_game.current_deal.trump_rank.name,
+                    "suit_input": suit
+                })
             elif data["type"] == "deal_cards":
                 if len(room.players) < 4:
                     await ws.send(json.dumps({
@@ -170,8 +229,16 @@ async def handler(ws):
                         "message": "缺少主数或主花色"
                     }))
                     continue
+                # team0_members = room.teams[0].members
+                # team1_members = room.teams[1].members
+                # if len(team0_members) != 2 or len(team1_members) != 2:
+                #     await ws.send(json.dumps({
+                #         "type": "error",
+                #         "message": "玩家还未分队"
+                #     }))
+                #     continue
 
-                rank_input = data["rank_input"]
+                rank_input = data["rank_input"]#room.active_game.current_deal.dealer_team.trump_rank
                 suit_input = data["suit_input"]
 
                 await manager.broadcast(room, {
@@ -196,12 +263,7 @@ async def handler(ws):
                     "room_id": room.room_id
                 })
                
-                deal.deal_number += 1
-                deal.trump_rank=rank_input
-                deal.trump_suit=suit_input
-                deal.tricks = [Trick(trump_rank=deal.trump_rank, trump_suit=deal.trump_suit, starting_player_index=0)]
-                deal.dealer_team = room.teams[0]
-                deal.challenger_team = room.teams[1]
+                room.active_game.current_deal.tricks = [Trick(trump_rank=deal.trump_rank, trump_suit=deal.trump_suit, starting_player_index=room.active_game.current_deal.dealer_team.members[0])]
 
             elif data["type"] == "play_card":
                 cards = data["cards"]
@@ -263,7 +325,6 @@ async def handler(ws):
                 # ✅ 所有玩家都出过牌，进入结算阶段
                 if len(set(pn for pn, _, _ in trick.play_sequence)) == 4:
                     winner, max_card, team_id, points = trick.resolve()
-                    print("结算")
                     # 新 Trick，胜者先出
                     new_trick = Trick(
                         trump_rank=deal.trump_rank,
@@ -274,7 +335,6 @@ async def handler(ws):
                     # room.active_game.current_deal.tricks.append(new_trick)
                     result = deal.get_team_points()
                     deal.tricks.append(new_trick)
-                    print("新trick已添加")
                     await manager.broadcast(room, {
                         "type": "trick_done",
                         "winner_player_number": winner,
@@ -283,7 +343,6 @@ async def handler(ws):
                         "trick_points": points,
                         "result": result
                     })
-                # print(f"出完牌后, {trick.trick_number=}, {trick.play_sequence=}")
             
             elif data["type"] == "hide_cards":
                 cards = data["cards"]

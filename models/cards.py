@@ -359,5 +359,3 @@ class Cards:
 #     for i in range(4):
 #         print(f"\n玩家 {i} 的排序后手牌（共 {len(players[i])} 张）：")
 #         print(players[i])
-
-print(Cards.is_valid_combo(["10♣", "10♣", "J♣", "J♣", "Q♣", "Q♣"], trump_rank = "6", trump_suit = "♠"))

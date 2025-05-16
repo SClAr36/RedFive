@@ -594,11 +594,12 @@
     <!-- 中间：手牌区 -->
     <div class="card-area">
       <div class="game-prepare">
-        <button onclick="selectTeam(0)">加入队伍 A</button>
-        <button onclick="selectTeam(1)">加入队伍 B</button>
+        <button onclick="selectTeam(0)">加入队 A</button>
+        <button onclick="selectTeam(1)">加入队 B</button>
         <button onclick="updateTeam()">分队</button>
         <button onclick="clearTeam()">撤销选队</button>
         <button onclick="Ready()">准备</button>
+        <button onclick="onStartGameClick()">开始新游戏</button>
         <button onclick="promptTrump()">发牌</button>
       </div>
 
@@ -701,13 +702,38 @@
             break;
 
           case "update_player_numbers":
-            addChatMessage("系统", `分队完成`, false);
+            addChatMessage("系统", `分队完成，${JSON.stringify(data.players)}`, false);
             break;
 
           case "team_cleared":
             addChatMessage("系统", `分队取消，请全体玩家重新选择队伍`, false);
             break;
 
+          // 服务器请客户端弹出主数输入框  
+          case "prompt_trump":
+            const rank = prompt("请输入本局主数（2~A）：");
+            ws.send(JSON.stringify({ type: "set_team_trump", rank }));
+            break;
+          
+          // 主数设定完成后播提示  
+          case "team_trump_set":
+            alert("主数已设为：" + data.trump_rank);
+            break;
+          
+          // 服务器请客户端弹出选庄家确认框  
+          case "prompt_dealer":
+            // myTeamId 要在登录/分队时记录
+            const isDealer = confirm("点击“确定”代表你们队先坐庄，点击“取消”等待对方");
+            if (isDealer) {
+              ws.send(JSON.stringify({ type: "set_dealer", team_id: myTeamId }));
+            }
+            break;
+          
+          // 庄家选定后播提示  
+          case "dealer_set":
+            alert("庄家队伍：" + (data.dealer_team_id === myTeamId ? "你的队伍" : "对方队伍"));
+            break;
+          
           case "deal_start":
             roomStatus.textContent = `🎯 本轮主数：${data.rank_input}，主花色：${data.suit_input}`;
             log.textContent += `🎲 开始发牌！主数是 ${data.rank_input}，主花色是 ${data.suit_input}\n`;
@@ -836,6 +862,17 @@
 
     function clearTeam() {
       ws.send(JSON.stringify({ type: "clear_team" }));
+    }
+    
+    // 点击“开始游戏”后，先让玩家选模式
+    function onStartGameClick() {
+      // 确认框：确定＝默认游戏，取消＝自主设定主数
+      const isDefault = confirm("是否使用默认游戏？\n\n确定：默认主数 2 并直接发牌\n取消：自己设定主数 + 选庄家");
+      if (isDefault) {
+        ws.send(JSON.stringify({ type: "start_game_default" }));
+      } else {
+        ws.send(JSON.stringify({ type: "start_game_choose_trump" }));
+      }
     }
     
     function Ready() {

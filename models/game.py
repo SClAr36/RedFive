@@ -22,30 +22,23 @@ class Game:
     current_deal: Optional[Deal] = None
     deal_counter: int = 0
 
-    def __post_init__(self):
-        """初始化：把 4 个玩家分为两个队"""
-        assert len(self.players) == 4
-        self.teams[0].members = [self.players[0], self.players[2]]
-        self.teams[1].members = [self.players[1], self.players[3]]
-        self.teams[0].is_dealer = True  # 默认 0 队为庄
+    # @property
+    # def dealer(self) -> Team:
+    #     """获取当前庄家队伍"""
+    #     return next(t for t in self.teams.values() if t.is_dealer)
 
-    @property
-    def dealer(self) -> Team:
-        """获取当前庄家队伍"""
-        return next(t for t in self.teams.values() if t.is_dealer)
+    # @property
+    # def challenger(self) -> Team:
+    #     return next(t for t in self.teams.values() if not t.is_dealer)
 
-    @property
-    def challenger(self) -> Team:
-        return next(t for t in self.teams.values() if not t.is_dealer)
-
-    def start_new_deal(self, suit: str):
+    def start_new_deal(self, suit: str, dealer_team: Team, challenger_team: Team):
         """开始新的一局 deal（由 Game 控制编号）"""
         self.deal_counter += 1
         self.current_deal = Deal(
             deal_number=self.deal_counter,
-            dealer_team=self.dealer,
-            challenger_team=self.challenger,
-            trump_rank=self.dealer.trump_rank,
+            dealer_team=dealer_team,
+            challenger_team=challenger_team,
+            trump_rank=dealer_team.trump_rank,
             trump_suit=suit
         )
 
