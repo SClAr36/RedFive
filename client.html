@@ -689,6 +689,10 @@
             addChatMessage("系统", `玩家${data.player_number}加入了${data.team_id === 0 ? 'A' : 'B'}队`, false);
             break;
 
+          case "update_player_numbers":
+            addChatMessage("系统", `分队完成`, false);
+            break;
+
           case "team_cleared":
             addChatMessage("系统", `分队取消，请全体玩家重新选择队伍`, false);
             break;
