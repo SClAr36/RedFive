@@ -171,7 +171,7 @@ async def handler(ws):
             # ———— 点击“开始游戏”后的两种模式 ————
             if data["type"] == "start_game_default":
                 # 1) 创建新一局 Game（默认各队 trump_rank＝Rank.TWO）
-                room.start_new_game
+                room.start_new_game()
                 # # 2) 随机选一个 suit 并启动第一个 Deal
                 # suit = random.choice(['♠','♥','♣','♦'])
                 # room.active_game.start_new_deal(suit, room.teams[0], room.teams[1])
@@ -223,9 +223,9 @@ async def handler(ws):
             #         "suit_input": suit
             #     })
 
-            elif data["type"] == "deal_cards":#TODO:独立游戏时写成两个datatype！
+            elif data["type"] == "deal_cards":
                 # 情形 1：若已经开始一局默认游戏，创建一个新 deal，由玩家 0 坐庄
-                if room.active_game:
+                if room.active_game and room.active_game.is_default:
                     game = room.active_game
                     suit = random.choice(['♠','♥','♣','♦'])
                     dealer = game.players[0]
@@ -243,13 +243,13 @@ async def handler(ws):
                         }))
                         continue
                     # 开始独立游戏，请求输入主数
-                    room.start_independent_deal_game
+                    room.start_independent_deal_game()
                     if "rank_input" not in data or "suit_input" not in data:
                         await ws.send(json.dumps({
                             "type": "request_trump_input",
                             "message": "请输入主数和主花色以开始新的一局"
                         }))
-                        return  # 提前返回，等待下次调用
+                        continue  # 提前返回，等待下次调用
                     else:
                         # 第二步：收到了输入 → 设置 trump
                         game = room.active_game
@@ -266,18 +266,20 @@ async def handler(ws):
                     "rank_input": rank,
                     "suit_input": suit
                 })
-                sorted_hands = deal.deal_to_players(game.players, dealer)
+                deal.deal_to_players(suit, game.players, dealer, dealer_team)
                 # 发送每个玩家的手牌
                 for idx, p in enumerate(game.players):
-                    await p.ws.send(json.dumps({
+                    target_ws = next(w for w, pl in manager.ws_to_player.items() if pl is p)
+                    await target_ws.send(json.dumps({
                         "type": "your_hand",
-                        "hand": sorted_hands[idx]
+                        "hand": p.hand
                     }))
-                    if p == deal.dealer:
-                        await p.ws.send(json.dumps({
-                            "type": "your_hidden",
-                            "cards": deal.final_cards
-                        }))
+
+                    # if p == deal.dealer:
+                    #     await p.ws.send(json.dumps({
+                    #         "type": "your_hidden",
+                    #         "cards": deal.final_cards
+                    #     }))
                 # for idx, p in enumerate(room.players):
                 #     p.hand = sorted_hands[idx]
                 #     p.hidden_cards = []

@@ -29,5 +29,5 @@ class Room:
     def start_independent_deal_game(self):
         self.teams[0].trump_rank = None
         self.teams[1].trump_rank = None
-        self.active_game = Game(player=self.players, teams=self.teams)
+        self.active_game = Game(players=self.players, teams=self.teams, is_default=False)
 

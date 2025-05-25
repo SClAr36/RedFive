@@ -21,6 +21,7 @@ class Game:
     history: List[DealResult] = field(default_factory=list)
     current_deal: Optional[Deal] = None
     deal_counter: int = 0
+    is_default: bool = True
 
     # @property
     # def dealer(self) -> Team:

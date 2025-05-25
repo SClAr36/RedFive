@@ -24,10 +24,13 @@ class Deal:
     final_cards: List[str] = field(default_factory=list) #每轮底牌
     hidden_cards: List[str] = field(default_factory=list) #每轮藏牌
 
-    def deal_to_players(self, players: List["Player"], dealer: "Player") -> Dict[int, List[str]]:
+    def deal_to_players(self, suit, players: List["Player"], dealer: "Player", dealer_team: "Team") -> Dict[int, List[str]]:
         """
         发牌并排序，每位玩家手牌写入 player.hand，同时返回排序后的手牌结构。
         """
+        self.trump_rank = dealer_team.trump_rank
+        self.trump_suit = suit
+        
         deck = Cards.create_deck()
         random.shuffle(deck)
     
@@ -42,13 +45,8 @@ class Deal:
     
         dealer.hand.extend(self.final_cards)
     
-        sorted_hands = {}
-    
         for idx, p in enumerate(players):
             p.hand = Cards.sort_hand(p.hand, self.trump_rank, self.trump_suit)
-            sorted_hands[idx] = list(p.hand)  # 可选 deepcopy
-    
-        return sorted_hands
     
 
     def get_team_points(self) -> Dict[int, int]:
