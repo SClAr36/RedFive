@@ -31,16 +31,18 @@ class Game:
     # def challenger(self) -> Team:
     #     return next(t for t in self.teams.values() if not t.is_dealer)
 
-    def start_new_deal(self, suit: str, dealer_team: Team, challenger_team: Team):
+    def start_new_deal(self, suit: str, dealer: Player, dealer_team: Team):
         """开始新的一局 deal（由 Game 控制编号）"""
         self.deal_counter += 1
         self.current_deal = Deal(
             deal_number=self.deal_counter,
+            dealer=dealer,
             dealer_team=dealer_team,
-            challenger_team=challenger_team,
+            challenger_team=(dealer_team.team_id + 1) % 2,
             trump_rank=dealer_team.trump_rank,
             trump_suit=suit
         )
+        return self.current_deal
 
     def finish_current_deal(self) -> Dict:
         """结算当前 deal 并返回下轮信息"""

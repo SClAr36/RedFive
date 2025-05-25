@@ -12,4 +12,4 @@ class Player:
     team_id: Optional[int] = None         # 所属队伍 ID
     player_number: Optional[int] = None                    # 玩家在游戏中的位置（0~3）
     is_dealer: bool = False               # 是否为庄家
-    is_playing: bool = False                # 是否在游戏中
+    hidden_cards: List[str] = field(default_factory=list)  # 藏牌

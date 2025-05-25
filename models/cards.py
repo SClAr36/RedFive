@@ -1,5 +1,4 @@
 import random
-import math
 from typing import List, Dict, Tuple, Optional
 from collections import defaultdict
 
@@ -7,6 +6,9 @@ from collections import defaultdict
 class Cards:
     # 定义扑克牌的点数顺序
     RANK_ORDER = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"]
+    
+    # 定义所有合法主数
+    RANK_TRUMP_ORDER = ["2", "4", "6", "7", "8", "9", "10", "J", "Q", "K", "A"]
 
     # 定义扑克牌的花色
     SUITS = ["♠", "♥", "♣", "♦"]

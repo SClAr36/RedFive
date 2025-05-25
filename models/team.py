@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 from .player import Player
 from .enums import Rank
+from .cards import Cards
 
 @dataclass
 class Team:
@@ -12,13 +13,12 @@ class Team:
     members: List[Player] = field(default_factory=list)          # 队伍成员
     trump_rank: Rank = None               # 当前主数（例如 Rank.FIVE）
     is_dealer: bool = False        # 是否为当前庄家
-    points: int = 0             # 当前分数
 
 
     def promote_trump(self):
         """如果庄家赢了一局，主数 +1（若已是最大则宣布胜利）"""
-        all_ranks = list(Rank)
-        idx = all_ranks.index(self.trump_rank)        
+        all_ranks = Cards.RANK_TRUMP_ORDER
+        idx = Cards.RANK_TRUMP_ORDER[self.trump_rank]
         if self.trump_rank == Rank.A:
             return "victory"
         self.trump_rank = all_ranks[idx + 1]

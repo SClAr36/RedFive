@@ -1,20 +1,55 @@
+import random
 from dataclasses import dataclass, field
+from collections import deque
 from typing import List, Optional, Tuple, Dict
 from .team import Team
 from .enums import Rank
 
 from .trick import Trick
+from .player import Player
+from .cards import Cards
 
+# 未来：创建一个新的类 Trick_slice，只记录 trick 中的重要信息放到 tricks 中
 
 @dataclass
 class Deal:
     """一局完整的发牌与25轮出牌(25 tricks)，包含局编号"""
     deal_number: int                         # 第几局（由 Game 控制）
+    dealer: Player                           # 坐庄玩家
     dealer_team: Team                        # 庄队
     challenger_team: Team                    # 挑战队
     trump_rank: Rank                         # 主数
     trump_suit: str                          # 主花色（例如 '♠'）
     tricks: List[Trick] = field(default_factory=list)  # 每轮 trick 记录
+    final_cards: List[str] = field(default_factory=list) #每轮底牌
+    hidden_cards: List[str] = field(default_factory=list) #每轮藏牌
+
+    def deal_to_players(self, players: List["Player"], dealer: "Player") -> Dict[int, List[str]]:
+        """
+        发牌并排序，每位玩家手牌写入 player.hand，同时返回排序后的手牌结构。
+        """
+        deck = Cards.create_deck()
+        random.shuffle(deck)
+    
+        self.final_cards = deck[:8]
+        remaining = deque(deck[8:])
+    
+        for p in players:
+            p.hand.clear()
+    
+        for i, card in enumerate(remaining):
+            players[i % 4].hand.append(card)
+    
+        dealer.hand.extend(self.final_cards)
+    
+        sorted_hands = {}
+    
+        for idx, p in enumerate(players):
+            p.hand = Cards.sort_hand(p.hand, self.trump_rank, self.trump_suit)
+            sorted_hands[idx] = list(p.hand)  # 可选 deepcopy
+    
+        return sorted_hands
+    
 
     def get_team_points(self) -> Dict[int, int]:
         """统计两支队伍的得分"""
@@ -27,15 +62,23 @@ class Deal:
                 result[trick.winning_team_id] += trick.points
         return result
 
-    def finish_deal(self) -> Tuple[Dict[int, int], Team, Rank]:
+    def finish_deal(self, hidden: List[str]) -> Tuple[int, int, Team, Rank]:
         """
         结算本轮，返回：
         - scores: 双方得分 {team_id: points}
         - next_dealer: 下一轮的庄队 Team
         - next_trump_rank: 下一轮的主数（来自庄家）
         """
+        added_points = sum(
+            5 if Cards.get_rank(card) == '5' else
+            10 if Cards.get_rank(card) in ['10', 'K'] else 0
+            for card in hidden
+        )
         scores = self.get_team_points()
+        dealer_score = scores[self.dealer_team.team_id]
         challenger_score = scores[self.challenger_team.team_id]
+        if self.tricks[-1].winning_team_id == self.challenger_team.team_id:
+            challenger_score = challenger_score + 2 * added_points
 
         if challenger_score >= 80:
             # 挑战成功，换庄
@@ -50,4 +93,4 @@ class Deal:
         if result == "victory":
             print("🏁 游戏结束，庄家完全胜利！")
 
-        return scores, next_dealer, next_dealer.trump_rank
+        return dealer_score, challenger_score, next_dealer, next_dealer.trump_rank
