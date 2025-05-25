@@ -24,7 +24,7 @@ async def handler(ws):
 
         player_number = room.players.index(player)
         player.player_number = player_number
-        player_name = player.nickname or f"玩家 {player_number}"
+        player_name = player.nickname or f"玩家 {player_number} "
         
         await ws.send(json.dumps({
             "type": "welcome",
@@ -93,6 +93,13 @@ async def handler(ws):
                 }, exclude_ws=ws)
 
             elif data["type"] == "team_update":
+                # 先检查房间玩家是否已有四人
+                if len(room.players) < 4:
+                    await ws.send(json.dumps({
+                        "type": "error",
+                        "message": "房间不足4人，无法分队"
+                    }))
+                    continue
                 # 1. 从 room.teams 直接取出已选队员
                 team0 = room.teams[0].members      # 已在队 0 的玩家列表
                 team1 = room.teams[1].members      # 已在队 1 的玩家列表
@@ -129,11 +136,12 @@ async def handler(ws):
                 room.players.sort(key=lambda p: p.player_number)
                 # 5. 广播更新
                 await manager.broadcast(room, {
-                    "type": "update_player_numbers",
-                    "players": [
-                        {"player_id": p.player_id, "player_team": p.team_id, "player_number": p.player_number}
-                        for p in room.players
-                    ]
+                    "type": "update_teams",
+                    "players": [{"player_id": p.player_id,
+                                 "player_name": p.nickname or f"玩家 {p.player_number} ",
+                                 "player_team": p.team_id,
+                                 "player_number": p.player_number}
+                    for p in room.players]
                 })
 
             elif data["type"] == "clear_team":
