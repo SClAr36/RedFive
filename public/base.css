@@ -1,0 +1,61 @@
+/* ---------- 基础排版 ---------- */
+:root {
+  --primary: #FF9AA2;      /* 主色调-粉 */
+  --secondary: #FFB7B2;    /* 辅助色-浅粉 */
+  --accent: #FFDAC1;       /* 强调色-米黄 */
+  --light: #E2F0CB;       /* 亮色-薄荷绿 */
+  --dark: #B5EAD7;        /* 暗色-浅绿 */
+  --text: #5E5E5E;        /* 正文文字 */
+  --text-light: #888;     /* 浅色文字 */
+  --white: #FFFFFF;       /* 纯白 */
+  --shadow: 0 4px 12px rgba(0,0,0,0.08); /* 标准阴影 */
+}
+
+body {
+  font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #F8F8F8;
+  color: var(--text);
+  line-height: 1.6;
+}
+
+h2 {
+  color: var(--primary);
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* ---------- 房间状态 ---------- */
+#room-status {
+  background-color: var(--white);
+  padding: 14px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow);
+  font-weight: 500;
+  text-align: center;
+  min-height: 20px;
+  border-left: 5px solid var(--primary);
+  color: var(--primary);
+  font-size: 16px;
+}
+
+/* ---------- 标题样式 ---------- */
+.section-title { 
+  color: var(--primary); 
+  margin-bottom: 16px; 
+  font-size: 18px; 
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+/* ---------- 自定义滚动条 ---------- */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: rgba(255, 218, 193, 0.2); border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #FF7B85; }

@@ -1,0 +1,292 @@
+/* ---------- 手牌区样式 ---------- */
+#hand { 
+  position: relative; 
+  min-height: 120px; 
+  margin: 24px 0; 
+}
+
+.card-container { 
+  position: relative; 
+  width: 100%; 
+  margin-bottom: 24px; 
+}
+
+.card-row { 
+  display: flex; 
+  justify-content: center; 
+  width: 100%; 
+  position: relative; 
+}
+
+.card-row:nth-child(2) { 
+  top: 2px; 
+  margin-left: 2px; 
+}
+
+.card {
+  position: relative;
+  width: 64px;
+  height: 96px;
+  background-color: var(--white);
+  border-radius: 8px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: bold;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  cursor: pointer;
+  user-select: none;
+  transform-origin: center bottom;
+  border: 2px solid var(--accent);
+  margin-right: -42px;
+}
+
+.card-rank, .card-suit { 
+  position: absolute; 
+  left: 6px; 
+}
+.card-rank { 
+  top: 6px; 
+  font-size: 16px; 
+}
+.card-suit { 
+  top: 26px; 
+  font-size: 16px; 
+}
+
+.card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+  z-index: 5;
+}
+
+.card.selected {
+  transform: translateY(-24px);
+  border: 2px solid var(--primary);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.2);
+  z-index: 10;
+}
+
+.card[data-suit="♥"] .card-rank,
+.card[data-suit="♥"] .card-suit,
+.card[data-suit="♦"] .card-rank,
+.card[data-suit="♦"] .card-suit { color: #FF5A5F; }
+
+.card[data-suit="♠"] .card-rank,
+.card[data-suit="♠"] .card-suit,
+.card[data-suit="♣"] .card-rank,
+.card[data-suit="♣"] .card-suit { color: #3A3A3A; }
+
+#hidden {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 24px 0;
+  justify-content: center;
+}
+
+#hidden span {
+  display: inline-block;
+  padding: 10px 16px;
+  font-size: 14px;
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  min-width: 42px;
+  text-align: center;
+  background-color: var(--white);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: all 0.2s;
+}
+
+/* 牌花色颜色 */
+.play-log-content .card-heart,
+.play-log-content .card-diamond {
+  color: #FF5A5F;
+}
+
+.play-log-content .card-spade,
+.play-log-content .card-club {
+  color: #3A3A3A;
+}
+
+.message {
+  margin-bottom: 12px;
+  max-width: 80%;
+  padding: 10px 14px;
+  border-radius: 18px;
+  font-size: 14px;
+  line-height: 1.4;
+  word-wrap: break-word;
+  transition: all 0.2s;
+}
+
+.message-other {
+  align-self: flex-start;
+  background-color: var(--secondary);
+  color: var(--text);
+  border-top-left-radius: 4px;
+}
+
+.message-self {
+  align-self: flex-end;
+  background-color: var(--primary);
+  color: white;
+  border-top-right-radius: 4px;
+}
+
+.message-sender {
+  font-size: 12px;
+  color: var(--text-light);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.message-self .message-sender {
+  text-align: right;
+  color: rgba(255,255,255,0.8);
+}
+
+/* ---------- 按钮样式 ---------- */
+button {
+  padding: 12px 20px;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 24px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-weight: 500;
+  font-size: 14px;
+  box-shadow: 0 2px 6px rgba(255, 154, 162, 0.3);
+}
+
+button:hover {
+  background-color: #FF7B85;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 154, 162, 0.4);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+/* 特殊按钮样式 */
+.action-buttons button {
+  min-width: 100px;
+}
+
+.game-prepare button {
+  background-color: var(--dark);
+  box-shadow: 0 2px 6px rgba(181, 234, 215, 0.3);
+}
+
+.game-prepare button:hover {
+  background-color: #9DD9C5;
+  box-shadow: 0 4px 12px rgba(181, 234, 215, 0.4);
+}
+
+.chat-input button {
+  background-color: var(--primary);
+  padding: 12px 20px;
+}
+
+/* 清空按钮 */
+.play-log-header button {
+  background-color: var(--light);
+  color: var(--text);
+  padding: 8px 16px;
+  font-size: 13px;
+  box-shadow: 0 2px 6px rgba(226, 240, 203, 0.3);
+}
+
+.play-log-header button:hover {
+  background-color: #D0E6B3;
+  box-shadow: 0 4px 12px rgba(226, 240, 203, 0.4);
+}
+
+/* ---------- 按钮组 ---------- */
+.button-group { 
+  display: flex; 
+  gap: 16px; 
+  margin-top: 16px; 
+  justify-content: center; 
+}
+
+.action-buttons {
+  display: flex;
+  gap: 16px;
+  margin: 24px 0;
+  position: relative;
+  z-index: 20;
+  justify-content: center;
+}
+
+.game-prepare { 
+  display: flex; 
+  gap: 16px; 
+  margin-bottom: 24px; 
+  justify-content: center;
+}
+
+/* ---------- 抽屉式游戏日志按钮 ---------- */
+#toggle-log-btn {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--white);
+  border: none;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(255, 154, 162, 0.4);
+  cursor: pointer;
+  transition: all 0.3s;
+  z-index: 110;
+}
+
+#toggle-log-btn:hover { 
+  background: #FF7B85;
+  transform: scale(1.1);
+}
+
+#close-log-btn { /* Moved from layout.css as it's a button style */
+  background: none;
+  border: none;
+  color: var(--white);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+#close-log-btn:hover { /* Moved from layout.css as it's a button style */
+  transform: scale(1.2);
+}
+
+/* ---------- 用户图标按钮 ---------- */
+.nickname-btn {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nickname-btn:hover {
+  background: rgba(255, 154, 162, 0.1);
+  transform: rotate(15deg);
+}
