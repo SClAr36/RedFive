@@ -18,10 +18,11 @@ class Team:
     def promote_trump(self):
         """如果庄家赢了一局，主数 +1（若已是最大则宣布胜利）"""
         all_ranks = Cards.RANK_TRUMP_ORDER
-        idx = Cards.RANK_TRUMP_ORDER[self.trump_rank]
+        idx = Cards.RANK_TRUMP_ORDER.index(self.trump_rank)
         if self.trump_rank == Rank.A:
             return "victory"
-        self.trump_rank = all_ranks[idx + 1]
+        self.trump_rank = Cards.RANK_TRUMP_ORDER[idx + 1]
+        return self.trump_rank
 
     def add_member(self, player: Player) -> Optional[str]:
         """

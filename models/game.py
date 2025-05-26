@@ -9,9 +9,9 @@ from .deal import Deal
 class DealResult:
     """记录一局 Deal 的结果"""
     deal_number: int
-    dealer_team_id: int
-    winner_team_id: int
-    points: int
+    dealer: int
+    dealer_team_points: int
+    challenger_team_points: int
 
 @dataclass
 class Game:
@@ -45,24 +45,36 @@ class Game:
         )
         return self.current_deal
 
-    def finish_current_deal(self) -> Dict:
-        """结算当前 deal 并返回下轮信息"""
-        if not self.current_deal:
+    def finish_current_deal(self):
+        """结算当前 deal 并返回:
+        庄家和挑战者的得分、下一个庄家队伍、下一个庄家玩家和下一个主数。
+        """
+        deal = self.current_deal
+        if not deal:
             raise RuntimeError("当前没有正在进行的 Deal")
 
-        scores, next_dealer, next_trump_rank = self.current_deal.finish_deal()
-        winner_id = max(scores, key=scores.get)
-
+        dealer_score, challenger_score = deal.final_points()
+        if challenger_score >= 80:
+            # 挑战成功，换庄
+            deal.dealer_team.is_dealer = False
+            deal.challenger_team.is_dealer = True
+            next_dealer_team = deal.challenger_team
+            next_dealer = self.players[(deal.dealer.player_number + 1) % 4 ]
+            next_trump_rank = deal.challenger_team.trump_rank
+        else:
+            # 挑战失败，庄家主数+1
+            next_dealer_team = deal.dealer_team
+            next_dealer = next(p for p in self.players if p.team_id == deal.dealer_team.team_id and p != deal.dealer)
+            next_trump_rank = deal.dealer_team.promote_trump()        
+        
+        if next_trump_rank == "victory":
+            print("🏁 游戏结束，庄家完全胜利！")
+        
         self.history.append(DealResult(
-            deal_number=self.current_deal.deal_number,
-            dealer_team_id=self.current_deal.dealer_team.team_id,
-            winner_team_id=winner_id,
-            points=scores[winner_id]
+            deal_number=deal.deal_number,
+            dealer=deal.dealer,
+            dealer_team_points=dealer_score,
+            challenger_team_points=challenger_score
         ))
 
-        return {
-            "scores": scores,
-            "next_dealer_team_id": next_dealer.team_id,
-            "next_trump_rank": next_trump_rank.name,
-            "deal_number": self.current_deal.deal_number
-        }
+        return dealer_score, challenger_score, next_dealer_team, next_dealer, next_trump_rank

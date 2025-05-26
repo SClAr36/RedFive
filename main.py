@@ -241,6 +241,7 @@ async def handler(ws):
                     rank = dealer_team.trump_rank
                     deal = game.start_new_deal(suit, dealer, dealer_team)
                 # 情形 2：开始一局独立的 deal，玩家 0 坐庄，会将 trump_rank 信息计入庄队 0
+                #TODO:注意另一个判断条件！若下一局换庄，庄的 trump_rank 仍是None
                 else:
                     team0_members = room.teams[0].members
                     team1_members = room.teams[1].members
@@ -326,6 +327,7 @@ async def handler(ws):
 
             elif data["type"] == "play_card": #TODO: 检查结束条件（藏牌清空！）
                 cards = data["cards"]
+                game = room.active_game
                 deal = room.active_game.current_deal
                 # 第一轮第一出前检查庄家是否已藏牌 
                 trick = deal.tricks[-1] if deal.tricks else None
@@ -392,7 +394,7 @@ async def handler(ws):
                     )
                     # room.active_game.current_deal.tricks.append(new_trick)
                     result = deal.get_team_points()
-                    deal.tricks.append(new_trick)
+                    #deal.tricks.append(new_trick)
                     await manager.broadcast(room, {
                         "type": "trick_done",
                         "winner_player_number": winner,
@@ -403,22 +405,29 @@ async def handler(ws):
                     })
                     # 如果一整局deal结束，翻出底牌，#TODO：并询问是否继续游戏（继承这局的信息往下打）
                     if all(len(p.hand) == 0 for p in room.players):
-                        hidden = deal.hidden_cards
-                        dealer_score, challenger_score, next_dealer, next_trump_rank = deal.finish_deal(hidden)
+                        #TODO：可以将player类中的 hidden cards去除，直接放在deal中
+                        dealer_score, challenger_score, next_dealer_team, next_dealer, next_trump_rank = game.finish_current_deal()
                         await manager.broadcast(room, {
                             "type": "deal_done",
                             "dealer_score": dealer_score,
                             "challenger_score": challenger_score,
-                            "next_dealer": next_dealer,
+                            "next_dealer_team": next_dealer_team.team_id,
+                            "next_dealer": next_dealer.nickname or f"玩家 {next_dealer.player_number}",
                             "next_trump_rank": next_trump_rank,
-                            "hidden": hidden
+                            "hidden": deal.hidden_cards,
                         })
+                        # 清空玩家手牌和藏牌
                         for p in game.players:
                             p.hand.clear()
                             p.hidden_cards.clear()
-                            #TODO:给每个玩家重新发送手牌
-                            #TODO：前端显示！空手牌和底牌
-            
+                            target_ws = next(w for w, pl in manager.ws_to_player.items() if pl is p)
+                            await target_ws.send(json.dumps({
+                                "type": "your_hidden",
+                                "hand": p.hidden_cards
+                            }))
+                    else:
+                        deal.tricks.append(new_trick)
+
             elif data["type"] == "continue_game":#TODO：结束独立deal后选择是否继续游戏
                 room.active_game.start_new_deal
                 # if use_same:

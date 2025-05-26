@@ -60,13 +60,11 @@ class Deal:
                 result[trick.winning_team_id] += trick.points
         return result
 
-    def finish_deal(self, hidden: List[str]) -> Tuple[int, int, Team, Rank]:
+    def final_points(self) -> Tuple[int, int]:
         """
-        结算本轮，返回：
-        - scores: 双方得分 {team_id: points}
-        - next_dealer: 下一轮的庄队 Team
-        - next_trump_rank: 下一轮的主数（来自庄家）
+        结算本轮，加上藏牌分数，返回双方最后总分
         """
+        hidden = self.hidden_cards
         added_points = sum(
             5 if Cards.get_rank(card) == '5' else
             10 if Cards.get_rank(card) in ['10', 'K'] else 0
@@ -77,6 +75,8 @@ class Deal:
         challenger_score = scores[self.challenger_team.team_id]
         if self.tricks[-1].winning_team_id == self.challenger_team.team_id:
             challenger_score = challenger_score + 2 * added_points
+            
+        return dealer_score, challenger_score
 
         if challenger_score >= 80:
             # 挑战成功，换庄

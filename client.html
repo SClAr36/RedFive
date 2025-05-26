@@ -639,7 +639,7 @@
     const log       = document.getElementById('log');
     const playLog   = document.getElementById('play-log');
     const roomStatus = document.getElementById("room-status");
-    const ws        = new WebSocket("ws://localhost:8765");
+    const ws        = new WebSocket("ws://7b50-2409-8900-30d6-b2b-4459-a91b-85bc-906c.ngrok-free.app");
     const chatMessages = document.getElementById('chat-messages');
     const messageInput = document.getElementById('message');
     const teamAScore = document.getElementById('team-a-score');
@@ -789,8 +789,8 @@
             const cardsHtml = data.cards.map(card => {
               const suit = card.slice(-1);
               const className = suit === '♥' ? 'card-heart' : 
-                               suit === '♦' ? 'card-diamond' :
-                               suit === '♠' ? 'card-spade' : 'card-club';
+                                suit === '♦' ? 'card-diamond' :
+                                suit === '♠' ? 'card-spade' : 'card-club';
               return `<span class="${className}">${card}</span>`;
             }).join(", ");
             playLog.innerHTML += `🕹️ ${data.player_name} 出了牌：${cardsHtml}<br>下一个出牌的玩家是${data.expected_player}\n`;
@@ -806,16 +806,17 @@
             break;
 
           case "deal_done":
-          log.textContent += `🃏 一整局已结束，得分结果为：${JSON.stringify(data.result)}\n`;
-          // 弹窗确认框
-          const continueGame = confirm("本局已结束，是否按当前配置继续下一局游戏？");
-          if (continueGame) {
-            // 玩家点击“是”，继续使用原本设置（如保留主数/主花色或默认策略）
-            ws.send(JSON.stringify({ type: "continue_game" }));
-          } else {
-            // 玩家点击“否”，可能需要重新选择主数主花色或更换庄家等
-            ws.send(JSON.stringify({ type: "stop_game" }));
-          }
+            playLog.innerHTML += `本局已结束！庄家藏牌为${data.hidden}\n庄队获得 ${data.dealer_score} 分\n擂队获得 ${data.challenger_score} 分\n下局庄家 ${data.next_dealer}, 下局主数 ${data.next_trump_rank}\n `;
+//          log.textContent += `🃏 一整局已结束，得分结果为：${JSON.stringify(data.result)}\n`;
+//          // 弹窗确认框
+//          const continueGame = confirm("本局已结束，是否按当前配置继续下一局游戏？");
+//          if (continueGame) {
+//            // 玩家点击“是”，继续使用原本设置（如保留主数/主花色或默认策略）
+//            ws.send(JSON.stringify({ type: "continue_game" }));
+//          } else {
+//            // 玩家点击“否”，可能需要重新选择主数主花色或更换庄家等
+//            ws.send(JSON.stringify({ type: "stop_game" }));
+//          }
           break;
             
           case "error":
