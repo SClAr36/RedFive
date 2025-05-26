@@ -303,17 +303,18 @@ async def handler(ws):
                 })
                 game.current_deal.tricks = [Trick(trump_rank=deal.trump_rank, trump_suit=deal.trump_suit, starting_player_index=game.players.index(dealer))]
 
-            elif data["type"] == "hide_cards":
+            elif data["type"] == "hide_cards":#TODO: 局末显示藏牌
                 cards = data["cards"]
-                if len(cards) != 8 or not all(c in player.hand for c in cards):
+                if len(cards) != 8 or not all(c in player.hand for c in cards):#TODO：限定只许庄家藏牌(可以用手牌25张为限)
                     await ws.send(json.dumps({
                         "type": "error",
-                        "message": "藏牌失败：必须是你手中的8张牌"
+                        "message": "藏牌失败：必须是你手中的 8 张牌"#TODO: 不规定8张牌并对多/少藏牌进行惩罚
                     }))
                 else:
                     for c in cards:
                         player.hand.remove(c)
                     player.hidden_cards = cards
+                    room.active_game.current_deal.hidden_cards = cards
                     await ws.send(json.dumps({
                         "type": "your_hand",
                         "hand": player.hand
@@ -325,7 +326,8 @@ async def handler(ws):
 
             elif data["type"] == "play_card": #TODO: 检查结束条件（藏牌清空！）
                 cards = data["cards"]
-                # —— 新增：第一轮第一出前检查庄家是否已藏牌 —— 
+                deal = room.active_game.current_deal
+                # 第一轮第一出前检查庄家是否已藏牌 
                 trick = deal.tricks[-1] if deal.tricks else None
                 if trick and trick.trick_number == 0 and trick.is_first_play:
                     # 根据 Trick.starting_player_index 找到当前第一出玩家（即庄家）
@@ -351,7 +353,7 @@ async def handler(ws):
                 trick = deal.tricks[-1] if deal.tricks else None
                 trump_rank = deal.trump_rank
                 trump_suit = deal.trump_suit
-                # 使用 Trick 内部的出牌记录逻辑
+                # 使用 Trick 内部的出牌记录逻辑，若无错误 error_msg 为当前出牌玩家序号
                 error_msg = trick.record_play(player, cards, trump_rank, trump_suit)
                 if error_msg not in range(4):
                     await ws.send(json.dumps({
@@ -362,6 +364,8 @@ async def handler(ws):
                 # 移除手牌中已出的牌
                 for c in cards:
                     player.hand.remove(c)
+                expected_number = (error_msg + 1) % 4
+                expected_player = next(p for p in room.players if p.player_number == expected_number)
                 # 广播出牌信息
                 await manager.broadcast(room, {
                     "type": "play_card",
@@ -369,8 +373,8 @@ async def handler(ws):
                     "player_number": player.player_number,
                     "player_name": player.nickname or f"玩家 {player.player_number}",
                     "cards": cards,
-                    "expected_player": (error_msg + 1) % 4
-                })
+                    "expected_player": expected_player.nickname or f"玩家 {expected_player.player_number} "
+                })#TODO：当trick结束时需要显示上一轮赢家为下一位玩家
                 # 更新自己的手牌显示
                 await ws.send(json.dumps({
                     "type": "your_hand",
@@ -397,9 +401,9 @@ async def handler(ws):
                         "trick_points": points,
                         "result": result
                     })
-                    # 如果一整局deal结束，翻出底牌，并询问是否继续游戏（继承这局的信息往下打）
+                    # 如果一整局deal结束，翻出底牌，#TODO：并询问是否继续游戏（继承这局的信息往下打）
                     if all(len(p.hand) == 0 for p in room.players):
-                        hidden = deal.dealer.hidden_cards
+                        hidden = deal.hidden_cards
                         dealer_score, challenger_score, next_dealer, next_trump_rank = deal.finish_deal(hidden)
                         await manager.broadcast(room, {
                             "type": "deal_done",
@@ -409,8 +413,13 @@ async def handler(ws):
                             "next_trump_rank": next_trump_rank,
                             "hidden": hidden
                         })
+                        for p in game.players:
+                            p.hand.clear()
+                            p.hidden_cards.clear()
+                            #TODO:给每个玩家重新发送手牌
+                            #TODO：前端显示！空手牌和底牌
             
-            elif data["type"] == "continue_game":
+            elif data["type"] == "continue_game":#TODO：结束独立deal后选择是否继续游戏
                 room.active_game.start_new_deal
                 # if use_same:
                 #     room.start_new_deal(same_settings=True)
@@ -423,7 +432,7 @@ async def handler(ws):
 
                         
     except websockets.exceptions.ConnectionClosed:
-        print("连接关闭")
+        print("连接关闭")#TODO：断线重连
 
     finally:
         if ws in manager.ws_to_player:

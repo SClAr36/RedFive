@@ -38,3 +38,5 @@ funtion selectTeam(teamId)
     统一写法：在rankorder里去掉参谋和主数
 
 一键disable 所有判断（自由模式）防止系统出bug
+
+建议前端将游戏日志跳出弹框（加入玩家，修改昵称，退出玩家）

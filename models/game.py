@@ -39,7 +39,7 @@ class Game:
             deal_number=self.deal_counter,
             dealer=dealer,
             dealer_team=dealer_team,
-            challenger_team=(dealer_team.team_id + 1) % 2,
+            challenger_team=self.teams[(dealer_team.team_id + 1) % 2],
             trump_rank=dealer_team.trump_rank,
             trump_suit=suit
         )
