@@ -58,7 +58,7 @@ async def handler(ws):
                     "type": "chat",
                     "player_id": player.player_id,
                     "player_number": player_number,
-                    "player_name": player_name,
+                    "player_name": player.nickname or f"玩家 {player_number} ",
                     "content": data["content"]
                 }, exclude_ws=ws)
 
@@ -79,7 +79,7 @@ async def handler(ws):
                     player.team_id = choice
                     await manager.broadcast(room, {
                         "type": "team_selected",
-                        "player_name": player_name,
+                        "player_name": player.nickname or f"玩家 {player_number} ",
                         "team_id": choice,
                         "player_id": player.player_id
                     })
@@ -89,7 +89,7 @@ async def handler(ws):
                 await manager.broadcast(room, {
                     "type": "ready_status",
                     "player_id": player.player_id,
-                    "player_name": player_name
+                    "player_name": player.nickname or f"玩家 {player_number} "
                 }, exclude_ws=ws)
 
             elif data["type"] == "team_update":
