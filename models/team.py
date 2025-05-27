@@ -15,7 +15,7 @@ class Team:
     is_dealer: bool = False        # 是否为当前庄家
 
 
-    def promote_trump(self):
+    def promote_trump(self): #TODO：抢二打四
         """如果庄家赢了一局，主数 +1（若已是最大则宣布胜利）"""
         all_ranks = Cards.RANK_TRUMP_ORDER
         idx = Cards.RANK_TRUMP_ORDER.index(self.trump_rank)

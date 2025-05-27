@@ -11,10 +11,36 @@ from models.trick import Trick
 from models.deal import Deal
 from models.team import Team
 from models.player import Player
-from models.enums import Rank, RANK_STR_TO_ENUM
+from models.room import Room
 
 
 manager = RoomManager()
+
+async def deal_cards(room: Room, suit: str, dealer: Player, dealer_team: Team):
+    game = room.active_game
+    deal = game.start_new_deal(suit, dealer, dealer_team)
+    rank = dealer_team.trump_rank
+    # 发送发牌消息并发牌
+    await manager.broadcast(room, {
+        "type": "deal_start",
+        "rank_input": rank,
+        "suit_input": suit
+    })
+    deal.deal_to_players(suit, game.players, dealer, dealer_team)
+    # 发送每个玩家的手牌
+    for idx, p in enumerate(game.players):
+        target_ws = next(w for w, pl in manager.ws_to_player.items() if pl is p)
+        await target_ws.send(json.dumps({
+            "type": "your_hand",
+            "hand": p.hand
+        }))
+    # 发送完牌完成消息
+    await manager.broadcast(room, { #TODO: 这里的deal_ready是多余的，deal_start就可以了
+        "type": "deal_ready",
+        "room_id": room.room_id
+    })
+    deal.tricks = [Trick(trump_rank=deal.trump_rank, trump_suit=deal.trump_suit, starting_player_index=game.players.index(dealer))]
+
 
 async def handler(ws):
     print("新玩家连接")
@@ -153,8 +179,8 @@ async def handler(ws):
                     "type": "team_cleared"
                 })
 
+            elif data["type"] == "start_new_game":
             # —— 公共：任何 start_game 的请求，先检查分队是否已满 —— 
-            if data["type"] == "start_game_default":
                 if len(room.players) < 4:
                     await ws.send(json.dumps({
                         "type": "error",
@@ -168,143 +194,52 @@ async def handler(ws):
                 #     }))
                 #     continue
                 if not all(len(team.members) == 2 for team in room.teams.values()):
-                    # 只发错误给当前客户端即可，用 manager.send 或 ws.send_json
                     await ws.send(json.dumps({
                         "type": "error",
                         "message": "每队需要 2 名玩家才能开始游戏，请先完成分队。"
                     }))
-                    # 跳过后续 start_game 逻辑，但不关闭连接
                     continue
-        
-            # ———— 点击“开始游戏”后的两种模式 ————
-            if data["type"] == "start_game_default":
-                # 1) 创建新一局 Game（默认各队 trump_rank＝Rank.TWO）
-                room.start_new_game()
-                # # 2) 随机选一个 suit 并启动第一个 Deal
-                # suit = random.choice(['♠','♥','♣','♦'])
-                # room.active_game.start_new_deal(suit, room.teams[0], room.teams[1])
-                # room.active_game.current_deal.dealer_team = room.teams[0]
-                # room.active_game.current_deal.challenger_team = room.teams[1]
-                # # 3) 广播发牌开始
-                # await manager.broadcast(room, {
-                #     "type": "deal_start",
-                #     "rank_input": room.active_game.current_deal.trump_rank,
-                #     "suit_input": suit
-                # })
-        
-            # elif data["type"] == "start_game_choose_trump":
-            #     # 1) 先构造 Game（占位），但不立刻发牌
-            #     room.start_new_game({0:room.teams[0].members,1:room.teams[1].members})
-            #     # 2) 请求客户端弹出主数输入框
-            #     await manager.broadcast(room, {"type": "prompt_team_trump"})
-        
-            # elif data["type"] == "set_team_trump":
-            #     # 客户端返回所选主数
-            #     rank_str = data["rank"]
-            #     player_team = player.team_id
-            #     room.teams[player_team].trump_rank = rank_str
-            #     await manager.broadcast(room, {
-            #         "type": "team_trump_set",
-            #         "team_id": player.team_id,
-            #         "trump_rank": rank_str
-            #     })
-            #     # 设完主数后，下一步请客户端选庄家
-            #     await manager.broadcast(room, {"type": "prompt_dealer"})
-        
-            # if data["type"] == "set_dealer":
-            #     # 客户端返回要做庄的队伍 ID
-            #     dealer_team_id = player.team_id
-            #     challenger_team_id = (dealer_team_id + 1) % 2
-            #     # 更新 Game 里哪个队是庄家
-            #     room.teams[dealer_team_id].is_dealer = True
-            #     room.teams[challenger_team_id].is_dealer = False
-            #     await manager.broadcast(room, {
-            #         "type": "dealer_set",
-            #         "dealer_team_id": dealer_team_id
-            #     })
-            #     # 庄家确定后，正式启动第一局 Deal
-            #     suit = random.choice(['♠','♥','♣','♦'])
-            #     room.active_game.start_new_deal(suit, dealer_team_id, challenger_team_id)
-            #     await manager.broadcast(room, {
-            #         "type": "deal_start",
-            #         "rank_input": room.active_game.current_deal.trump_rank,
-            #         "suit_input": suit
-            #     })
-
-            elif data["type"] == "deal_cards":
-                # 情形 1：若已经开始一局默认游戏，创建一个新 deal，由玩家 0 坐庄
-                if room.active_game and room.active_game.is_default:
-                    game = room.active_game
-                    suit = random.choice(['♠','♥','♣','♦'])
-                    dealer = game.players[0]
-                    dealer_team = game.teams[0]
-                    rank = dealer_team.trump_rank
-                    deal = game.start_new_deal(suit, dealer, dealer_team)
-                # 情形 2：开始一局独立的 deal，玩家 0 坐庄，会将 trump_rank 信息计入庄队 0
-                #TODO:注意另一个判断条件！若下一局换庄，庄的 trump_rank 仍是None
-                else:
-                    team0_members = room.teams[0].members
-                    team1_members = room.teams[1].members
-                    if len(team0_members) != 2 or len(team1_members) != 2:
-                        await ws.send(json.dumps({
-                            "type": "error",
-                            "message": "玩家还未分队"
-                        }))
-                        continue
-                    # 开始独立游戏，请求输入主数
-                    room.start_independent_deal_game()
-                    if "rank_input" not in data or "suit_input" not in data:
-                        await ws.send(json.dumps({
-                            "type": "request_trump_input",
-                            "message": "请输入主数和主花色以开始新的一局"
-                        }))
-                        continue  # 提前返回，等待下次调用
-                    else:
-                        # 第二步：收到了输入 → 设置 trump
-                        game = room.active_game
-                        rank = data["rank_input"]
-                        suit = data["suit_input"]
-                        dealer = game.players[0]
-                        dealer_team = game.teams[0]
-                        dealer_team.trump_rank = rank
-                        deal = game.start_new_deal(suit, dealer, dealer_team)
-                
-                # 发送发牌消息并发牌
-                await manager.broadcast(room, {
-                    "type": "deal_start",
-                    "rank_input": rank,
-                    "suit_input": suit
-                })
-                deal.deal_to_players(suit, game.players, dealer, dealer_team)
-                # 发送每个玩家的手牌
-                for idx, p in enumerate(game.players):
-                    target_ws = next(w for w, pl in manager.ws_to_player.items() if pl is p)
-                    await target_ws.send(json.dumps({
-                        "type": "your_hand",
-                        "hand": p.hand
+                # 情形 1：若没有正在进行的游戏，或已确认开始新游戏，询问是否开始默认游戏（庄家 0，两队主数 2）
+                if room.active_game == None or data.get("confirmed", False) == True:
+                    await ws.send(json.dumps({
+                        "type": "confirm_start_default_game",
+                        "message": "是否开始默认游戏？"
+                    }))
+                    continue
+                # 情形 2：若有正在进行的游戏，且还未确认是否继续，先确认是否继续上局游戏
+                elif room.active_game and data.get("confirmed", False) == False:
+                    await ws.send(json.dumps({
+                        "type": "confirm_start_new",
+                        "message": "检测到上盘游戏尚未结束，是否继续？"
                     }))
 
-                    # if p == deal.dealer:
-                    #     await p.ws.send(json.dumps({
-                    #         "type": "your_hidden",
-                    #         "cards": deal.final_cards
-                    #     }))
-                # for idx, p in enumerate(room.players):
-                #     p.hand = sorted_hands[idx]
-                #     p.hidden_cards = []
-                #     target_ws = next(w for w, pl in manager.ws_to_player.items() if pl is p)
-                #     await target_ws.send(json.dumps({
-                #         "type": "your_hand",
-                #         "hand": p.hand
-                #     }))
-                # 发送完牌完成消息
-                await manager.broadcast(room, {
-                    "type": "deal_ready",
-                    "room_id": room.room_id
-                })
-                game.current_deal.tricks = [Trick(trump_rank=deal.trump_rank, trump_suit=deal.trump_suit, starting_player_index=game.players.index(dealer))]
+            # 开始默认游戏
+            elif data["type"] == "start_default_game":
+                room.start_new_game(rank0=2, rank1=2) # 默认主数为 2
+                suit = random.choice(['♠', '♥', '♣', '♦'])
+                await deal_cards(room, suit, room.players[0], room.teams[0])
+            
+            # 开始独立游戏
+            elif data["type"] == "start_free_game":
+                game = room.start_new_game(rank0=data["rank_input"])
+                await deal_cards(room, data["suit_input"], game.players[0], game.teams[0])
+                                
+            # 继续上局游戏
+            elif data["type"] == "continue_previous_game":
+                if not room.active_game or not room.active_game.history:
+                    await ws.send(json.dumps({
+                        "type": "error",
+                        "message": "没有上一局游戏可供继续。"
+                    }))
+                    continue
+                # TODO:elif 庄队没主数
+                elif room.active_game.history:
+                    game = room.active_game
+                    last_deal = game.history[-1]
+                    suit = random.choice(['♠', '♥', '♣', '♦'])
+                    await deal_cards(room, suit, last_deal.next_dealer, last_deal.winner_team)
 
-            elif data["type"] == "hide_cards":#TODO: 局末显示藏牌
+            elif data["type"] == "hide_cards":
                 cards = data["cards"]
                 if len(cards) != 8 or not all(c in player.hand for c in cards):#TODO：限定只许庄家藏牌(可以用手牌25张为限)
                     await ws.send(json.dumps({
@@ -325,7 +260,7 @@ async def handler(ws):
                         "cards": cards
                     }))
 
-            elif data["type"] == "play_card": #TODO: 检查结束条件（藏牌清空！）
+            elif data["type"] == "play_card":
                 cards = data["cards"]
                 game = room.active_game
                 deal = room.active_game.current_deal
@@ -349,9 +284,7 @@ async def handler(ws):
                         "message": "你出的牌不在手牌中"
                     }))
                     continue
-            
                 # 获取当前 Trick 实例
-                # trick = room.active_game.current_deal.tricks[-1]
                 trick = deal.tricks[-1] if deal.tricks else None
                 trump_rank = deal.trump_rank
                 trump_suit = deal.trump_suit
@@ -376,7 +309,7 @@ async def handler(ws):
                     "player_name": player.nickname or f"玩家 {player.player_number}",
                     "cards": cards,
                     "expected_player": expected_player.nickname or f"玩家 {expected_player.player_number} "
-                })#TODO：当trick结束时需要显示上一轮赢家为下一位玩家
+                })#FIXME：当trick结束时需要显示上一轮赢家为下一位玩家
                 # 更新自己的手牌显示
                 await ws.send(json.dumps({
                     "type": "your_hand",
@@ -385,16 +318,7 @@ async def handler(ws):
                 # ✅ 所有玩家都出过牌，进入结算阶段
                 if len(set(pn for pn, _, _ in trick.play_sequence)) == 4:
                     winner, max_card, team_id, points = trick.resolve()
-                    # 新 Trick，胜者先出
-                    new_trick = Trick(
-                        trump_rank=deal.trump_rank,
-                        trump_suit=deal.trump_suit,
-                        trick_number=trick.trick_number + 1,
-                        starting_player_index=winner,
-                    )
-                    # room.active_game.current_deal.tricks.append(new_trick)
                     result = deal.get_team_points()
-                    #deal.tricks.append(new_trick)
                     await manager.broadcast(room, {
                         "type": "trick_done",
                         "winner_player_number": winner,
@@ -403,7 +327,7 @@ async def handler(ws):
                         "trick_points": points,
                         "result": result
                     })
-                    # 如果一整局deal结束，翻出底牌，#TODO：并询问是否继续游戏（继承这局的信息往下打）
+                    # 如果一整局deal结束，翻出底牌
                     if all(len(p.hand) == 0 for p in room.players):
                         #TODO：可以将player类中的 hidden cards去除，直接放在deal中
                         dealer_score, challenger_score, next_dealer_team, next_dealer, next_trump_rank = game.finish_current_deal()
@@ -425,19 +349,16 @@ async def handler(ws):
                                 "type": "your_hidden",
                                 "hand": p.hidden_cards
                             }))
-                    else:
+                        game.current_deal = None # 清空当前 deal
+                    else: 
+                    # 在一般情况下加入新 Trick，胜者先出
+                        new_trick = Trick(
+                            trump_rank=deal.trump_rank,
+                            trump_suit=deal.trump_suit,
+                            trick_number=trick.trick_number + 1,
+                            starting_player_index=winner,
+                        )
                         deal.tricks.append(new_trick)
-
-            elif data["type"] == "continue_game":#TODO：结束独立deal后选择是否继续游戏
-                room.active_game.start_new_deal
-                # if use_same:
-                #     room.start_new_deal(same_settings=True)
-                # else:
-                #     # 可能进入等待设定主数/主花色阶段
-                #     await manager.broadcast(room, {
-                #         "type": "prompt_trump_selection"
-                #     })
-            
 
                         
     except websockets.exceptions.ConnectionClosed:

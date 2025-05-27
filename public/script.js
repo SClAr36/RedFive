@@ -81,45 +81,58 @@ const handDiv   = document.getElementById("card-container");
             🟦 队B成员：${teamB.join('，')}`;
             addChatMessage("系统", msg, false);
             break;
-          
-//          case "update_player_numbers":
-//            addChatMessage("系统", `分队完成，${JSON.stringify(data.players)}`, false);
-//            break;
 
           case "team_cleared":
             addChatMessage("系统", `分队取消，请全体玩家重新选择队伍`, false);
             break;
 
-          case "request_trump_input":
-            addChatMessage("系统", `${data.message}`, false);
-            promptTrump();
+          case "confirm_start_default_game":
+            const startDefault = confirm(
+              data.message || "是否以默认设置开始游戏？\n\n" +
+              "主数：2；庄家为第一位玩家\n\n" +
+              "【确定】开始默认游戏\n【取消】自己选择主数(和庄家)"
+            );
+            // 如果用户选择了默认设置，则发送开始游戏请求
+            if (startDefault) {
+              ws.send(JSON.stringify({ type: "start_default_game" }));
+            } else {
+              // 用户想自定义主数，弹出 prompt 框输入主数
+              promptTrump("start_free_game");
+            }
+            break;
+          
+          case "confirm_start_new":
+            const startNew = confirm(data.message || "检测到上盘游戏未结束，是否开始新游戏？\n\n" +
+              "【确定】开始新游戏\n【取消】继续这盘游戏"
+            );
+            if (startNew) {
+              ws.send(JSON.stringify({ type: "start_new_game",
+                "confirmed": true
+               }));
+            }
             break;
 
-//          // 服务器请客户端弹出主数输入框  
-//          case "choose_trump":
-//            const rank = prompt("请输入你们队的起始主数（2~A）：");
-//            ws.send(JSON.stringify({ type: "set_team_trump", rank }));
-//            break;
-//
-//            // 主数设定完成后播提示  
-//          case "team_trump_set":
-//            alert("主数已设为：" + data.trump_rank);
-//            break;
-//          
-//          // 服务器请客户端弹出选庄家确认框  
-//          case "prompt_dealer":
-//            // myTeamId 要在登录/分队时记录
-//            const isDealer = confirm("点击“确定”代表你们队先坐庄，点击“取消”等待对方");
-//            if (isDealer) {
-//              ws.send(JSON.stringify({ type: "set_dealer" }));
-//            }
-//            break;
-//          
-//          // 庄家选定后播提示  
-//          case "dealer_set":
-//            alert("庄家队伍：" + (data.dealer_team_id === myTeamId ? "你的队伍" : "对方队伍"));
-//            break;
-//          
+          // case "request_trump_input":
+          //   const rank = prompt("请选择本局的主数（例如 2~A）");
+          //   if (!rank || !["2","4","6","7","8","9","10","J","Q","K","A"].includes(rank)) {
+          //     alert("无效主数！"); return;
+          //   }
+          //   const suits = ["♠","♥","♣","♦"];
+          //   const suit = suits[Math.floor(Math.random() * 4)];
+          //   alert("系统随机抽取的主花色是：" + suit);
+          //   ws.send(JSON.stringify({ type: "deal_cards", rank_input: rank, suit_input: suit }));
+          //   break;
+
+          // case "ask_continue_previous":
+          //   const continueGame = confirm("上一局游戏未结束，是否继续？\n\n" +
+          //                                "【确定】继续游戏\n【取消】重新开始");
+          //   if (continueGame) {
+          //     ws.send(JSON.stringify({ type: "deal_cards", continue_previous: true }));
+          //   } else {
+          //     ws.send(JSON.stringify({ type: "deal_cards", continue_previous: false }));
+          //   }
+          //   break;
+
           case "deal_start":
             roomStatus.textContent = `🎯 本轮主数：${data.rank_input}，主花色：${data.suit_input}`;
             log.textContent += `🎲 开始发牌！主数是 ${data.rank_input}，主花色是 ${data.suit_input}\n`;
@@ -170,16 +183,6 @@ const handDiv   = document.getElementById("card-container");
 
           case "deal_done":
             playLog.innerHTML += `本局已结束！庄家藏牌为${data.hidden}\n庄队获得 ${data.dealer_score} 分\n擂队获得 ${data.challenger_score} 分\n下局庄家 ${data.next_dealer}, 下局主数 ${data.next_trump_rank}\n `;
-//          log.textContent += `🃏 一整局已结束，得分结果为：${JSON.stringify(data.result)}\n`;
-//          // 弹窗确认框
-//          const continueGame = confirm("本局已结束，是否按当前配置继续下一局游戏？");
-//          if (continueGame) {
-//            // 玩家点击“是”，继续使用原本设置（如保留主数/主花色或默认策略）
-//            ws.send(JSON.stringify({ type: "continue_game" }));
-//          } else {
-//            // 玩家点击“否”，可能需要重新选择主数主花色或更换庄家等
-//            ws.send(JSON.stringify({ type: "stop_game" }));
-//          }
           break;
             
           case "error":
@@ -200,16 +203,6 @@ const handDiv   = document.getElementById("card-container");
     };
 
     /* -------------------- 辅助函数 -------------------- */
-//    function showTrumpModal() {
-//      input.value = '';
-//      modal.style.display = 'flex';
-//      input.focus();
-//    }
-//    function hideTrumpModal() {
-//      modal.style.display = 'none';
-//    }
-
-
     function setNicknameWithPrompt() {
       const nickname = prompt("请输入你的昵称：");
       if (nickname && nickname.trim()) {
@@ -276,15 +269,7 @@ const handDiv   = document.getElementById("card-container");
     }
     
     function onStartGameClick() {
-      const isConfirmed = confirm(
-        "是否以默认设置开始游戏？\n\n" +
-        "主数：2；庄家为0队\n\n" +
-        "【确定】开始游戏\n【取消】返回"
-      );
-      if (isConfirmed) {
-        ws.send(JSON.stringify({ type: "start_game_default" }));
-      }
-      // 如果取消，什么都不做
+      ws.send(JSON.stringify({ type: "start_new_game" }));
     }
     
     function Ready() {
@@ -293,19 +278,19 @@ const handDiv   = document.getElementById("card-container");
       //roomStatus.textContent = "🃏 已准备，等待其他玩家...";
     }
 
-    function dealCards() {
-      ws.send(JSON.stringify({ type: "deal_cards" }));
+    function continueGame() {
+      ws.send(JSON.stringify({ type: "continue_previous_game" }));
     }
 
-    function promptTrump() {
+    function promptTrump(type) {
       const rank = prompt("请选择本局的主数（例如 2~A）");
-      if (!rank || !["2","4","6","7","8","9","10","J","Q","K","A"].includes(rank)) {
+      if (!rank || !["2","4","6","7","8","9","10","J","Q","K","A"].includes(rank.toUpperCase())) {
         alert("无效主数！"); return;
       }
       const suits = ["♠","♥","♣","♦"];
       const suit = suits[Math.floor(Math.random() * 4)];
       alert("系统随机抽取的主花色是：" + suit);
-      ws.send(JSON.stringify({ type: "deal_cards", rank_input: rank, suit_input: suit }));
+      ws.send(JSON.stringify({ type: type, rank_input: rank.toUpperCase(), suit_input: suit }));
     }
 
     function updateHandDisplay() {

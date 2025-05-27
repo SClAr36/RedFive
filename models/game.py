@@ -12,6 +12,8 @@ class DealResult:
     dealer: int
     dealer_team_points: int
     challenger_team_points: int
+    winner_team: Team
+    next_dealer: Player
 
 @dataclass
 class Game:
@@ -21,7 +23,6 @@ class Game:
     history: List[DealResult] = field(default_factory=list)
     current_deal: Optional[Deal] = None
     deal_counter: int = 0
-    is_default: bool = True
 
     # @property
     # def dealer(self) -> Team:
@@ -74,7 +75,9 @@ class Game:
             deal_number=deal.deal_number,
             dealer=deal.dealer,
             dealer_team_points=dealer_score,
-            challenger_team_points=challenger_score
+            challenger_team_points=challenger_score,
+            winner_team=next_dealer_team,
+            next_dealer=next_dealer
         ))
 
         return dealer_score, challenger_score, next_dealer_team, next_dealer, next_trump_rank
