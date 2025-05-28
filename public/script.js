@@ -153,6 +153,11 @@ const handDiv   = document.getElementById("card-container");
               return `<span class="${className}">${card}</span>`;
             }).join(", ");
             playLog.innerHTML += `🕹️ ${data.player_name} 出了牌：${cardsHtml}<br>下一个出牌的玩家是${data.expected_player}\n`;
+            
+            // 只有特定牌型（AAK, KKA, QQK, KKQ）才播放动画
+            if (isSpecialCardPattern(data.cards)) {
+              playGifAnimation();
+            }
             break;
 
           case "trick_done":
@@ -331,6 +336,25 @@ const handDiv   = document.getElementById("card-container");
       document.querySelectorAll(".card.selected").forEach(card => card.classList.remove("selected"));
     }
 
+    // GIF动画控制
+    function playGifAnimation() {
+      const gifOverlay = document.getElementById('gif-overlay');
+      const gifImg = document.getElementById('gif-animation');
+      
+      // 显示动画
+      gifOverlay.classList.add('show');
+      
+      // 重置GIF动画（通过重新设置src）
+      const originalSrc = gifImg.src;
+      gifImg.src = '';
+      gifImg.src = originalSrc;
+      
+      // 1.3秒后隐藏动画
+      setTimeout(() => {
+        gifOverlay.classList.remove('show');
+      }, 1300);
+    }
+
     // 下拉菜单控制
     function toggleDropdown() {
       document.getElementById("team-dropdown").closest('.dropdown').classList.toggle('active');
@@ -347,3 +371,17 @@ const handDiv   = document.getElementById("card-container");
         dropdown.classList.remove('active');
       }
     });
+
+    // 检查是否为特定牌型（AAK, KKA, QQK, KKQ）
+    function isSpecialCardPattern(cards) {
+      if (cards.length !== 3) return false;
+      
+      // 提取牌面值（去掉花色）
+      const ranks = cards.map(card => card.slice(0, -1)).sort();
+      
+      // 检查是否为指定的牌型组合
+      const pattern = ranks.join('');
+      const specialPatterns = ['AAK', 'AKK', 'KQQ', 'QQK'];
+      
+      return specialPatterns.includes(pattern);
+    }

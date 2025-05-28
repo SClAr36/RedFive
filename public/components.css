@@ -1,3 +1,28 @@
+/* ---------- GIF动画样式 ---------- */
+.gif-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.3);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.gif-overlay.show {
+  display: flex;
+}
+
+.gif-animation {
+  max-width: 400px;
+  max-height: 400px;
+  border-radius: 12px;
+}
+
 /* ---------- 手牌区样式 ---------- */
 #hand { 
   position: relative; 
