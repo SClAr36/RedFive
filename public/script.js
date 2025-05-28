@@ -1,22 +1,6 @@
 const handDiv   = document.getElementById("card-container");
     const log       = document.getElementById('log');
-    const playLog   = document.          case "play_card":
-            const cardsHtml = data.cards.map(card => {
-              const suit = card.slice(-1);
-              const className = suit === '♥' ? 'card-heart' : 
-                                suit === '♦' ? 'card-diamond' :
-                                suit === '♠' ? 'card-spade' : 'card-club';
-              return `<span class="${className}">${card}</span>`;
-            }).join(", ");
-            playLog.innerHTML += `🕹️ ${data.player_name} 出了牌：${cardsHtml}<br>下一个出牌的玩家是${data.expected_player}\n`;
-            
-            // 检查牌型并播放相应动画
-            if (isTractorPattern(data.cards)) {
-              playTractorAnimation();
-            } else if (isSpecialCardPattern(data.cards)) {
-              playGifAnimation();
-            }
-            break;'play-log');
+    const playLog   = document.getElementById('play-log');
     const roomStatus = document.getElementById("room-status");
     const ws        = new WebSocket("ws://localhost:8765");
     const chatMessages = document.getElementById('chat-messages');
@@ -170,10 +154,8 @@ const handDiv   = document.getElementById("card-container");
             }).join(", ");
             playLog.innerHTML += `🕹️ ${data.player_name} 出了牌：${cardsHtml}<br>下一个出牌的玩家是${data.expected_player}\n`;
             
-            // 检查牌型并播放相应动画
-            if (isTractorPattern(data.cards)) {
-              playTractorAnimation();
-            } else if (isSpecialCardPattern(data.cards)) {
+            // 只有特定牌型（AAK, KKA, QQK, KKQ）才播放动画
+            if (isSpecialCardPattern(data.cards)) {
               playGifAnimation();
             }
             break;
@@ -373,25 +355,6 @@ const handDiv   = document.getElementById("card-container");
       }, 1300);
     }
 
-    // 播放拖拉机动画
-    function playTractorAnimation() {
-      const tractorOverlay = document.getElementById('tractor-overlay');
-      const tractorImg = document.getElementById('tractor-animation');
-      
-      // 显示动画
-      tractorOverlay.classList.add('show');
-      
-      // 重置GIF动画（通过重新设置src）
-      const originalSrc = tractorImg.src;
-      tractorImg.src = '';
-      tractorImg.src = originalSrc;
-      
-      // 1.3秒后隐藏动画
-      setTimeout(() => {
-        tractorOverlay.classList.remove('show');
-      }, 1300);
-    }
-
     // 下拉菜单控制
     function toggleDropdown() {
       document.getElementById("team-dropdown").closest('.dropdown').classList.toggle('active');
@@ -421,19 +384,4 @@ const handDiv   = document.getElementById("card-container");
       const specialPatterns = ['AAK', 'AKK', 'KQQ', 'QQK'];
       
       return specialPatterns.includes(pattern);
-    }
-
-    // 检查是否为拖拉机牌型（如2233, 5566等）
-    function isTractorPattern(cards) {
-      if (cards.length !== 4) return false;
-      
-      // 提取牌面值（去掉花色）并排序
-      const ranks = cards.map(card => card.slice(0, -1)).sort();
-      
-      // 检查是否为AABB的格式（两个相同牌面值的对子）
-      if (ranks[0] === ranks[1] && ranks[2] === ranks[3] && ranks[0] !== ranks[2]) {
-        return true;
-      }
-      
-      return false;
     }
