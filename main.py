@@ -278,7 +278,7 @@ async def handler(ws):
                         "cards": cards
                     }))
 
-            elif data["type"] == "play_card":
+            elif data["type"] == "play_card": #TODO:brilliant cards send "siu!!!"
                 cards = data["cards"]
                 game = room.active_game
                 deal = room.active_game.current_deal
@@ -307,7 +307,7 @@ async def handler(ws):
                 trump_rank = deal.trump_rank
                 trump_suit = deal.trump_suit
                 # 使用 Trick 内部的出牌记录逻辑，若无错误 error_msg 为当前出牌玩家序号
-                error_msg = trick.record_play(player, cards, trump_rank, trump_suit)
+                error_msg, celebrate = trick.record_play(player, cards, trump_rank, trump_suit)
                 if error_msg not in range(4):
                     await ws.send(json.dumps({
                         "type": "error",
@@ -326,6 +326,7 @@ async def handler(ws):
                     "player_number": player.player_number,
                     "player_name": player.nickname or f"玩家 {player.player_number}",
                     "cards": cards,
+                    "celebrate cue": celebrate,
                     "expected_player": expected_player.nickname or f"玩家 {expected_player.player_number} "
                 })#FIXME：当trick结束时需要显示上一轮赢家为下一位玩家
                 # 更新自己的手牌显示

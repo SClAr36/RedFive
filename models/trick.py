@@ -62,19 +62,19 @@ class Trick:
         return True, None
     
     
-    def record_play(self, player: Player, cards: List[str], trump_rank: str, trump_suit: str) -> Optional[str]:
+    def record_play(self, player: Player, cards: List[str], trump_rank: str, trump_suit: str) -> Tuple[Optional[str], Optional[str]]:
         """
         判断并记录玩家出牌，处理合法性和代表牌记录
         """
         expected = (self.starting_player_index + len(set(pn for pn, _, _ in self.play_sequence))) % 4
         if player.player_number != expected:
-            return f"❌ 现在不是你出牌，请等待玩家 {expected} 出牌"
+            return f"❌ 现在不是你出牌，请等待玩家 {expected} 出牌", None
     
         # 首出：直接判定牌型是否合法
         if self.is_first_play:
-            valid, representative = Cards.is_valid_combo(cards, trump_rank, trump_suit)
+            valid, representative, celebrate = Cards.is_valid_combo(cards, trump_rank, trump_suit)
             if not valid:
-                return "❌ 非法牌型！请重新出牌！"
+                return "❌ 非法牌型！请重新出牌！", None
             else:
                 self.valid_play_sequence.append((player.player_number, representative, player.team_id))
     
@@ -82,18 +82,16 @@ class Trick:
             # 非首出：必须跟花
             bo, msg = self.is_following_legally(player, cards)
             if not bo:
-                return msg
-    
-            # 检查牌型是否符合规则（比如两张必须完全相同等）
-            valid, representative = Cards.is_valid_combo(cards, trump_rank, trump_suit)
+                return msg, None
+            # 检查牌型本身是否合法（比如两张必须完全相同等）
+            valid, representative, celebrate = Cards.is_valid_combo(cards, trump_rank, trump_suit)
             if valid:
                 self.valid_play_sequence.append((player.player_number, representative, player.team_id))
-    
-        # 合法则加入记录
+        # 合理跟牌则加入记录
         for card in cards:
             self.play_sequence.append((player.player_number, card, player.team_id))
     
-        return expected
+        return expected, celebrate
             
     def resolve(self) -> Tuple[int, str, int, int]:
         """

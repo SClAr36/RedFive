@@ -189,7 +189,7 @@ class Cards:
     @staticmethod
     def is_valid_combo(
         cards: List[str], trump_rank: str, trump_suit: str
-    ) -> Tuple[bool, Optional[str]]:
+    ) -> Tuple[bool, Optional[str], Optional[str]]:
         ranks = [Cards.get_rank(c) for c in cards]
         suits = [Cards.get_suit(c) for c in cards]
         colors = [Cards.SUIT_COLOR.get(s, "") for s in suits]
@@ -213,48 +213,48 @@ class Cards:
         counts = {r: ranks.count(r) for r in set(ranks)}
 
         if len(cards) == 1:
-            return True, cards[0]
+            return True, cards[0], None
 
         elif len(cards) == 2:
-            return (True, cards[0]) if cards[0] == cards[1] else (False, None)
+            return (True, cards[0], None) if cards[0] == cards[1] else (False, None, None)
 
         elif len(cards) == 3:
             # 三张 Joker
             if all(r in Cards.JOKERS for r in cards):
-                return True, cards[0]
+                return True, cards[0], "KING!"
 
             # 三张主数，颜色相同
             if all(r == trump_rank for r in ranks) and same_color:
-                return True, sorted_cards[2]
+                return True, sorted_cards[2], "KING!"
 
             # 三张 advisor，颜色相同
             if all(c in [advisor, deputy_advisor] for c in cards):
-                return True, cards[0]
+                return True, cards[0], "KING!"
 
             # 特殊组合，且要求三张牌同花色
             if same_suit:
                 if trump_rank not in ["K", "A"]:
                     if sorted_ranks in [["A", "K", "K"], ["A", "A", "K"]]:
-                        return True, cards[0]
+                        return True, cards[0], "siu!!!"
                 elif trump_rank == "K":
                     if sorted_ranks in [["A", "Q", "Q"], ["A", "A", "Q"]]:
-                        return True, cards[0]
+                        return True, cards[0], "siu!!!"
                 elif trump_rank == "A":
                     if sorted_ranks in [["K", "Q", "Q"], ["K", "K", "Q"]]:
-                        return True, cards[0]
+                        return True, cards[0], "siu!!!"
 
         if len(cards) == 4:
             # 四张 Joker
             if all(r in Cards.JOKERS for r in cards):
-                return True, cards[0]
+                return True, cards[0], "KING!"
 
             # 四张主数，颜色相同
             if all(r == trump_rank for r in ranks) and same_color:
-                return True, cards[0]
+                return True, cards[0], "KING!"
 
             # 四张 advisor，颜色相同
             if all(c in [advisor, deputy_advisor] for c in cards):
-                return True, cards[0]
+                return True, cards[0], "KING!"
 
             # 四张同花色，必须连号（拖拉机）
             if same_suit and all(x not in cards for x in ["JOKER1", "JOKER2", "5♥"]) and trump_rank not in ranks:
@@ -267,23 +267,23 @@ class Cards:
                     if colors[0] != trump_color:                        
                         # 紧邻
                         if i1 == i0 + 1:
-                            return True, cards[0]
+                            return True, cards[0], "tractor!"
                         # 隔一个主数
                         if i1 == i0 + 2 and i0 + 1 == i_trump:
-                            return True, cards[0]
+                            return True, cards[0], "tractor!"
                     else: # 若和主花色相同，需隔一个参谋判定合法
                         if "3" not in ranks:
                             if i1 == i0 + 1:
-                                return True, cards[0]
+                                return True, cards[0], "tractor!"
                             # 隔一个主数
                             if i1 == i0 + 2 and i0 + 1 == i_trump:
-                                return True, cards[0]
+                                return True, cards[0], "tractor!"
                             if trump_rank != "4":
                                 if i0 == 2 and i1 == 4:
-                                    return True, cards[0]
+                                    return True, cards[0], "tractor!"
                             else:
                                 if i0 == 2 and i1 == 5:
-                                    return True, cards[0]
+                                    return True, cards[0], "tractor!"
                         
 
         elif len(cards) == 6:
@@ -309,7 +309,7 @@ class Cards:
                                       idxs[2] - idxs[1] == 1)
                         if cond_adjacent or cond_skip1 or cond_skip0:
                             # 代表牌这里暂且返回第一张，或按需改为最大对子的一张
-                            return True, cards[0]
+                            return True, cards[0], "lulu!"
         
         elif len(cards) == 8:
             unique_ranks = sorted(counts.keys(), key=lambda r: Cards.RANK_ORDER.index(r))
@@ -339,10 +339,10 @@ class Cards:
                                       idxs[3] - idxs[2] == 1)
                         if cond_adjacent or cond_skip2 or cond_skip1 or cond_skip0:
                             # 代表牌这里暂且返回第一张，或按需改为最大对子的一张
-                            return True, cards[0]
+                            return True, cards[0], "dragon!!!"
 
         # 最后一行：所有情况都不符合时
-        return False, None
+        return False, None, None
 
 
 # -------------------- 运行示例 --------------------
