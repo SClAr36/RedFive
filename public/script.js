@@ -330,3 +330,20 @@ const handDiv   = document.getElementById("card-container");
       ws.send(JSON.stringify({ type: "hide_cards", cards: selectedCards }));
       document.querySelectorAll(".card.selected").forEach(card => card.classList.remove("selected"));
     }
+
+    // 下拉菜单控制
+    function toggleDropdown() {
+      document.getElementById("team-dropdown").closest('.dropdown').classList.toggle('active');
+    }
+
+    function closeDropdown() {
+      document.getElementById("team-dropdown").closest('.dropdown').classList.remove('active');
+    }
+
+    // 点击外部关闭下拉菜单
+    document.addEventListener('click', function(event) {
+      const dropdown = document.querySelector('.dropdown');
+      if (dropdown && !dropdown.contains(event.target)) {
+        dropdown.classList.remove('active');
+      }
+    });

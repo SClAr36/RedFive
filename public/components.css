@@ -290,3 +290,72 @@ button:active {
   background: rgba(255, 154, 162, 0.1);
   transform: rotate(15deg);
 }
+
+/* ---------- 下拉菜单样式 ---------- */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-btn {
+  background-color: var(--dark) !important;
+  color: white;
+  border: none;
+  cursor: pointer;
+  padding: 12px 20px;
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 2px 6px rgba(181, 234, 215, 0.3);
+  transition: all 0.3s;
+}
+
+.dropdown-btn:hover {
+  background-color: #9DD9C5 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(181, 234, 215, 0.4);
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: white;
+  min-width: 160px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  z-index: 1000;
+  overflow: hidden;
+  margin-top: 4px;
+  border: 1px solid rgba(0,0,0,0.1);
+}
+
+.dropdown-content button {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  background-color: white;
+  color: var(--text);
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: 0;
+  box-shadow: none;
+  transition: background-color 0.2s;
+}
+
+.dropdown-content button:hover {
+  background-color: var(--light);
+  transform: none;
+  box-shadow: none;
+}
+
+.dropdown-content button:not(:last-child) {
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.dropdown.active .dropdown-content {
+  display: block;
+}

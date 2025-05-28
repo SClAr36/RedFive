@@ -49,10 +49,15 @@
     <!-- 中间：手牌区 -->
     <div class="card-area">
       <div class="game-prepare">
-        <button onclick="selectTeam(0)">加入队 A</button>
-        <button onclick="selectTeam(1)">加入队 B</button>
-        <button onclick="updateTeam()">分队</button>
-        <button onclick="clearTeam()">撤销选队</button>
+        <div class="dropdown">
+          <button class="dropdown-btn" onclick="toggleDropdown()">队伍 ▼</button>
+          <div class="dropdown-content" id="team-dropdown">
+            <button onclick="selectTeam(0); closeDropdown()">加入队 A</button>
+            <button onclick="selectTeam(1); closeDropdown()">加入队 B</button>
+            <button onclick="updateTeam(); closeDropdown()">分队</button>
+            <button onclick="clearTeam(); closeDropdown()">撤销选队</button>
+          </div>
+        </div>
         <button onclick="Ready()">准备</button>
         <button onclick="onStartGameClick()">开始新游戏</button>
         <button onclick="continueGame()">继续游戏</button>
