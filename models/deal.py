@@ -77,18 +77,3 @@ class Deal:
             challenger_score = challenger_score + 2 * added_points
             
         return dealer_score, challenger_score
-
-        if challenger_score >= 80:
-            # 挑战成功，换庄
-            self.dealer_team.is_dealer = False
-            self.challenger_team.is_dealer = True
-            next_dealer = self.challenger_team
-        else:
-            # 挑战失败，庄家主数+1
-            result = self.dealer_team.promote_trump()
-            next_dealer = self.dealer_team
-        
-        if result == "victory":
-            print("🏁 游戏结束，庄家完全胜利！")
-
-        return dealer_score, challenger_score, next_dealer, next_dealer.trump_rank

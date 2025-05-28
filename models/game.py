@@ -1,6 +1,6 @@
 # Game 类：完整管理一局游戏，包括玩家、队伍和每轮历史记录
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Tuple
 from .player import Player
 from .team import Team
 from .deal import Deal
@@ -46,7 +46,7 @@ class Game:
         )
         return self.current_deal
 
-    def finish_current_deal(self):
+    def finish_current_deal(self) -> Tuple[int, int, Team, Player, int]:
         """结算当前 deal 并返回:
         庄家和挑战者的得分、下一个庄家队伍、下一个庄家玩家和下一个主数。
         """

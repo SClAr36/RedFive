@@ -112,26 +112,9 @@ const handDiv   = document.getElementById("card-container");
             }
             break;
 
-          // case "request_trump_input":
-          //   const rank = prompt("请选择本局的主数（例如 2~A）");
-          //   if (!rank || !["2","4","6","7","8","9","10","J","Q","K","A"].includes(rank)) {
-          //     alert("无效主数！"); return;
-          //   }
-          //   const suits = ["♠","♥","♣","♦"];
-          //   const suit = suits[Math.floor(Math.random() * 4)];
-          //   alert("系统随机抽取的主花色是：" + suit);
-          //   ws.send(JSON.stringify({ type: "deal_cards", rank_input: rank, suit_input: suit }));
-          //   break;
-
-          // case "ask_continue_previous":
-          //   const continueGame = confirm("上一局游戏未结束，是否继续？\n\n" +
-          //                                "【确定】继续游戏\n【取消】重新开始");
-          //   if (continueGame) {
-          //     ws.send(JSON.stringify({ type: "deal_cards", continue_previous: true }));
-          //   } else {
-          //     ws.send(JSON.stringify({ type: "deal_cards", continue_previous: false }));
-          //   }
-          //   break;
+          case "request_trump_rank":
+            promptTrump("continue_previous_game");
+            break;
 
           case "deal_start":
             roomStatus.textContent = `🎯 本轮主数：${data.rank_input}，主花色：${data.suit_input}`;

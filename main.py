@@ -16,6 +16,11 @@ from models.room import Room
 
 manager = RoomManager()
 
+# ！！！调用需注意：发牌函数本身不含主数！只是在 start_new_deal(...) 中载入主数为庄家主数。
+# ！！！所以使用前庄家主数不能为 None！
+# 设置庄家主数方法：
+# 1. room.start_new_game(rank0, rank1) 中输入两个 rank 分别为 0、1 队主数
+# 2. 直接设置 team.trump_rank
 async def deal_cards(room: Room, suit: str, dealer: Player, dealer_team: Team):
     game = room.active_game
     deal = game.start_new_deal(suit, dealer, dealer_team)
@@ -50,7 +55,6 @@ async def handler(ws):
 
         player_number = room.players.index(player)
         player.player_number = player_number
-        player_name = player.nickname or f"玩家 {player_number} "
         
         await ws.send(json.dumps({
             "type": "welcome",
@@ -221,23 +225,37 @@ async def handler(ws):
             
             # 开始独立游戏
             elif data["type"] == "start_free_game":
+                # 将 0 队主数设为 rank_input
                 game = room.start_new_game(rank0=data["rank_input"])
                 await deal_cards(room, data["suit_input"], game.players[0], game.teams[0])
                                 
             # 继续上局游戏
             elif data["type"] == "continue_previous_game":
+                # 确认是否存在游戏记录
                 if not room.active_game or not room.active_game.history:
                     await ws.send(json.dumps({
                         "type": "error",
                         "message": "没有上一局游戏可供继续。"
                     }))
                     continue
-                # TODO:elif 庄队没主数
+                # 若存在，确认是否已设定庄家主数
                 elif room.active_game.history:
                     game = room.active_game
                     last_deal = game.history[-1]
-                    suit = random.choice(['♠', '♥', '♣', '♦'])
-                    await deal_cards(room, suit, last_deal.next_dealer, last_deal.winner_team)
+                    # 若庄家无主数，且未输入主数，请求输入主数
+                    if last_deal.winner_team.trump_rank == None and "rank_input" not in data:
+                        await ws.send(json.dumps({
+                            "type": "request_trump_rank"
+                        }))
+                        continue
+                    # 若庄家无主数，主数已输入
+                    elif last_deal.winner_team.trump_rank == None and "rank_input" in data:
+                        last_deal.winner_team.trump_rank = data["rank_input"]
+                        await deal_cards(room, data["suit_input"], last_deal.next_dealer, last_deal.winner_team)
+                    # 若庄家已有主数
+                    else:
+                        suit = random.choice(['♠', '♥', '♣', '♦'])
+                        await deal_cards(room, suit, last_deal.next_dealer, last_deal.winner_team)
 
             elif data["type"] == "hide_cards":
                 cards = data["cards"]
