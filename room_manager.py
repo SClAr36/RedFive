@@ -5,7 +5,6 @@ from websockets import WebSocketServerProtocol
 
 from models.player import Player
 from models.room import Room
-from models.enums import Rank
 from models.team import Team
 
 
@@ -25,8 +24,8 @@ class RoomManager:
             room_id = str(uuid.uuid4())[:8]
             players = []
             teams = {
-                0: Team(team_id=0, members=[], trump_rank=Rank.TWO),
-                1: Team(team_id=1, members=[], trump_rank=Rank.TWO),
+                0: Team(team_id=0, members=[]),
+                1: Team(team_id=1, members=[]),
             }
             room = Room(room_id=room_id, players=players, teams=teams)
             self.rooms[room_id] = room

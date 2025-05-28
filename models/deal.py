@@ -3,7 +3,6 @@ from dataclasses import dataclass, field
 from collections import deque
 from typing import List, Optional, Tuple, Dict
 from .team import Team
-from .enums import Rank
 
 from .trick import Trick
 from .player import Player
@@ -18,7 +17,7 @@ class Deal:
     dealer: Player                           # 坐庄玩家
     dealer_team: Team                        # 庄队
     challenger_team: Team                    # 挑战队
-    trump_rank: Rank                         # 主数
+    trump_rank: str                         # 主数
     trump_suit: str                          # 主花色（例如 '♠'）
     tricks: List[Trick] = field(default_factory=list)  # 每轮 trick 记录
     final_cards: List[str] = field(default_factory=list) #每轮底牌
