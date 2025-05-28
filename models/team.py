@@ -3,7 +3,6 @@
 from dataclasses import dataclass, field
 from typing import List, Optional
 from .player import Player
-from .enums import Rank
 from .cards import Cards
 
 @dataclass
@@ -11,15 +10,14 @@ class Team:
     """代表一个队伍，含成员、主数、得分和是否为庄"""
     team_id: int                    # 队伍编号（0 或 1）
     members: List[Player] = field(default_factory=list)          # 队伍成员
-    trump_rank: Rank = None               # 当前主数（例如 Rank.FIVE）
+    trump_rank: str = None               # 当前主数（例如 6）
     is_dealer: bool = False        # 是否为当前庄家
 
 
     def promote_trump(self): #TODO：抢二打四
         """如果庄家赢了一局，主数 +1（若已是最大则宣布胜利）"""
-        all_ranks = Cards.RANK_TRUMP_ORDER
         idx = Cards.RANK_TRUMP_ORDER.index(self.trump_rank)
-        if self.trump_rank == Rank.A:
+        if self.trump_rank == "A":
             return "victory"
         self.trump_rank = Cards.RANK_TRUMP_ORDER[idx + 1]
         return self.trump_rank

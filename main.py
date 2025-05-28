@@ -183,7 +183,7 @@ async def handler(ws):
                     "type": "team_cleared"
                 })
 
-            elif data["type"] == "start_new_game":
+            elif data["type"] == "start_new_game": #FIXME：当上局没结束时开始新游戏需要清空hidden（传一个hidden消息）
             # —— 公共：任何 start_game 的请求，先检查分队是否已满 —— 
                 if len(room.players) < 4:
                     await ws.send(json.dumps({
@@ -214,12 +214,12 @@ async def handler(ws):
                 elif room.active_game and data.get("confirmed", False) == False:
                     await ws.send(json.dumps({
                         "type": "confirm_start_new",
-                        "message": "检测到上盘游戏尚未结束，是否继续？"
+                        "message": "检测到上盘游戏尚未结束，是否开始新游戏？"
                     }))
 
             # 开始默认游戏
             elif data["type"] == "start_default_game":
-                room.start_new_game(rank0=2, rank1=2) # 默认主数为 2
+                room.start_new_game(rank0="2", rank1="2") # 默认主数为 2
                 suit = random.choice(['♠', '♥', '♣', '♦'])
                 await deal_cards(room, suit, room.players[0], room.teams[0])
             
