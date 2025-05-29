@@ -182,9 +182,17 @@ const handDiv   = document.getElementById("card-container");
             }).join(", ");
             playLog.innerHTML += `🕹️ ${data.player_name} 出了牌：${cardsHtml}<br>下一个出牌的玩家是${data.expected_player}\n`;
             
-            // 只有特定牌型（AAK, KKA, QQK, KKQ）才播放动画
-            if (isSpecialCardPattern(data.cards)) {
-              playGifAnimation();
+            // 只有特定牌型才播放动画
+            if (data.celebrate_cue == "siu!!!") {
+              playGifAnimation("content/cr7-siuuuuu.gif");
+            } else if (data.celebrate_cue == "KING!") {
+              playGifAnimation("content/cr7-kick.gif");
+            } else if (data.celebrate_cue == "tractor!") {
+              playGifAnimation("content/tractor.gif");
+            } else if (data.celebrate_cue == "lulu!") {
+              playGifAnimation("content/lulu.gif");
+            } else if (data.celebrate_cue == "dragon!!!") {
+              playGifAnimation("content/goodnight.gif");
             }
             break;
 
@@ -365,9 +373,14 @@ const handDiv   = document.getElementById("card-container");
     }
 
     // GIF动画控制
-    function playGifAnimation() {
+    function playGifAnimation(gifPath, duration = 1800) {
       const gifOverlay = document.getElementById('gif-overlay');
       const gifImg = document.getElementById('gif-animation');
+      
+      // 设置新的GIF路径
+      if (gifPath) {
+        gifImg.src = gifPath;
+      }
       
       // 显示动画
       gifOverlay.classList.add('show');
@@ -377,10 +390,10 @@ const handDiv   = document.getElementById("card-container");
       gifImg.src = '';
       gifImg.src = originalSrc;
       
-      // 1.3秒后隐藏动画
+      // 指定时长后隐藏动画
       setTimeout(() => {
         gifOverlay.classList.remove('show');
-      }, 1300);
+      }, duration);
     }
 
     // 下拉菜单控制
@@ -399,17 +412,3 @@ const handDiv   = document.getElementById("card-container");
         dropdown.classList.remove('active');
       }
     });
-
-    // 检查是否为特定牌型（AAK, KKA, QQK, KKQ）
-    function isSpecialCardPattern(cards) {
-      if (cards.length !== 3) return false;
-      
-      // 提取牌面值（去掉花色）
-      const ranks = cards.map(card => card.slice(0, -1)).sort();
-      
-      // 检查是否为指定的牌型组合
-      const pattern = ranks.join('');
-      const specialPatterns = ['AAK', 'AKK', 'KQQ', 'QQK'];
-      
-      return specialPatterns.includes(pattern);
-    }

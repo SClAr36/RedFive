@@ -347,7 +347,7 @@ async def handler(ws):
                     "player_number": player.player_number,
                     "player_name": player.nickname or f"玩家 {player.player_number}",
                     "cards": cards,
-                    "celebrate cue": celebrate,
+                    "celebrate_cue": celebrate,
                     "expected_player": expected_player.nickname or f"玩家 {expected_player.player_number} "
                 })#FIXME：当trick结束时需要显示上一轮赢家为下一位玩家
                 # 更新自己的手牌显示
