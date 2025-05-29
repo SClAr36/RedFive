@@ -65,22 +65,50 @@ const handDiv   = document.getElementById("card-container");
             break;
 
           case "update_teams":
+            // 这是队伍序号一起显示的版本
             const teamA = [];
             const teamB = [];
-          
+            // 寻找之前分队信息
             data.players.forEach(p => {
+              const text = `${p.player_name} ➜ 玩家 ${p.player_number}`;
               if (p.player_team === 0) {
-                teamA.push(p.player_name);
+                teamA.push(text);
               } else {
-                teamB.push(p.player_name);
+                teamB.push(text);
               }
             });
-          
-            const msg = `分队完成：<br>
-            🟥 队A成员：${teamA.join('，')}<br>
-            🟦 队B成员：${teamB.join('，')}`;
+            
+            const msg = `分队完成！<br>
+            🟥 队 A：<br>${teamA.join("<br>")}<br><br>
+            🟦 队 B：<br>${teamB.join("<br>")}`;
+            
             addChatMessage("系统", msg, false);
             break;
+            // const teamA = [];
+            // const teamB = [];
+            //寻找每个玩家所属队伍
+            // data.players.forEach(p => {
+              // if (p.player_team === 0) {
+                // teamA.push(p.player_name);
+              // } else {
+                // teamB.push(p.player_name);
+              // }
+            // });
+            //更新分队信息
+            // const msg = `分队完成：<br>
+            // 🟥 队A成员：${teamA.join('，')}<br>
+            // 🟦 队B成员：${teamB.join('，')}`;
+            // addChatMessage("系统", msg, false);
+            //附加一条更新玩家编号的广播
+            // const numMsg = data.players
+              // .map(p => {
+                // const color = (p.player_number % 2 === 0) ? '#FF8A80' : '#7CAEFF';
+                // const bullet = `<span style="color:${color}">●</span>`;
+                // return `${bullet} ${p.player_name} ➜ 玩家 ${p.player_number}`;
+              // })
+              // .join("<br>");
+            // addChatMessage("系统", `更新后的玩家序号为：<br>${numMsg}`, false);
+            // break;
 
           case "team_cleared":
             addChatMessage("系统", `分队取消，请全体玩家重新选择队伍`, false);
@@ -331,7 +359,7 @@ const handDiv   = document.getElementById("card-container");
         const suit = card.querySelector(".card-suit").textContent;
         selectedCards.push(rank + suit);
       });
-      if (selectedCards.length !== 8) { alert="请选择恰好 8 张牌作为底牌！"; return; }
+      // if (selectedCards.length !== 8) { alert="请选择恰好 8 张牌作为底牌！"; return; }
       ws.send(JSON.stringify({ type: "hide_cards", cards: selectedCards }));
       document.querySelectorAll(".card.selected").forEach(card => card.classList.remove("selected"));
     }

@@ -39,8 +39,16 @@ async def deal_cards(room: Room, suit: str, dealer: Player, dealer_team: Team):
             "type": "your_hand",
             "hand": p.hand
         }))
-    # 发送完牌完成消息
-    await manager.broadcast(room, { #TODO: 这里的deal_ready是多余的，deal_start就可以了
+    # 初始化玩家藏牌
+    for idx, p in enumerate(game.players):
+        p.hidden_cards.clear()  # 清空藏牌
+        tar_ws = next(w for w, pl in manager.ws_to_player.items() if pl is p)
+        await tar_ws.send(json.dumps({
+            "type": "your_hidden",
+            "cards": p.hidden_cards
+        }))
+    # 发送完牌完成消息 #TODO: 这里的deal_ready是多余的，deal_start就可以了
+    await manager.broadcast(room, { 
         "type": "deal_ready",
         "room_id": room.room_id
     })
@@ -105,14 +113,14 @@ async def handler(ws):
                     # 加入失败，通知客户端，但不关闭连接
                     await ws.send(json.dumps({"type": "error", "message": err}))
                 else:
-                    # 加入成功，更新 player.team_id 并广播
+                    # 加入成功，更新 player.team_id 并广播 
                     player.team_id = choice
                     await manager.broadcast(room, {
                         "type": "team_selected",
                         "player_name": player.nickname or f"玩家 {player_number} ",
                         "team_id": choice,
                         "player_id": player.player_id
-                    })
+                    })#FIXME:当玩家没有修改昵称时，无法返回“以前”的玩家序号，前端会显示：“玩家1 to 玩家1”这种重复信息
 
             elif data["type"] == "ready":
                 player.is_ready = True
@@ -259,10 +267,26 @@ async def handler(ws):
 
             elif data["type"] == "hide_cards":
                 cards = data["cards"]
-                if len(cards) != 8 or not all(c in player.hand for c in cards):#TODO：限定只许庄家藏牌(可以用手牌25张为限)
+                deal = room.active_game.current_deal
+                # 检查是否有正在进行的游戏
+                if not deal:
                     await ws.send(json.dumps({
                         "type": "error",
-                        "message": "藏牌失败：必须是你手中的 8 张牌"#TODO: 不规定8张牌并对多/少藏牌进行惩罚
+                        "message": "当前没有进行中的游戏"
+                    }))
+                    continue
+                # 检查玩家是否是庄家
+                if player.player_number != deal.dealer.player_number:
+                    await ws.send(json.dumps({
+                        "type": "error",
+                        "message": "只有庄家可以藏牌"
+                    }))
+                    continue
+                # 检查藏牌数量和是否在手牌中
+                if len(cards) != 8 or not all(c in player.hand for c in cards):
+                    await ws.send(json.dumps({
+                        "type": "error",
+                        "message": "藏牌失败：必须是你手中的 8 张牌"
                     }))
                 else:
                     for c in cards:
@@ -278,18 +302,15 @@ async def handler(ws):
                         "cards": cards
                     }))
 
-            elif data["type"] == "play_card": #TODO:brilliant cards send "siu!!!"
+            elif data["type"] == "play_card":
                 cards = data["cards"]
                 game = room.active_game
                 deal = room.active_game.current_deal
                 # 第一轮第一出前检查庄家是否已藏牌 
                 trick = deal.tricks[-1] if deal.tricks else None
                 if trick and trick.trick_number == 0 and trick.is_first_play:
-                    # 根据 Trick.starting_player_index 找到当前第一出玩家（即庄家）
-                    dealer_number = trick.starting_player_index
-                    dealer_player = next(p for p in room.players if p.player_number == dealer_number)
-                    # 如果藏牌数不足 8 张，则阻止出牌
-                    if len(dealer_player.hidden_cards) < 8:
+                    # 如果庄家藏牌数不足 8 张，则阻止出牌
+                    if len(deal.dealer.hidden_cards) < 8:
                         await ws.send(json.dumps({
                             "type": "error",
                             "message": "庄家还未藏牌！"
@@ -379,7 +400,7 @@ async def handler(ws):
                         )
                         deal.tricks.append(new_trick)
 
-                        
+    #TODO：玩家退出后自动退队
     except websockets.exceptions.ConnectionClosed:
         print("连接关闭")#TODO：断线重连
 
