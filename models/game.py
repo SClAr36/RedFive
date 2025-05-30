@@ -33,6 +33,16 @@ class Game:
     # def challenger(self) -> Team:
     #     return next(t for t in self.teams.values() if not t.is_dealer)
 
+    def get_player_by_number(self, player_number: int):
+        """
+        返回指定 player_number 的玩家对象。
+        若未找到，返回 None。
+        """
+        for player in self.players:
+            if player.player_number == player_number:
+                return player
+        return None
+    
     def start_new_deal(self, suit: str, dealer: Player, dealer_team: Team):
         """开始新的一局 deal（由 Game 控制编号）"""
         self.deal_counter += 1

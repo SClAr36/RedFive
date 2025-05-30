@@ -327,7 +327,7 @@ async def handler(ws):
                 trick = deal.tricks[-1] if deal.tricks else None
                 trump_rank = deal.trump_rank
                 trump_suit = deal.trump_suit
-                # 使用 Trick 内部的出牌记录逻辑，若无错误 error_msg 为当前出牌玩家序号
+                # 使用 Trick 内部的出牌记录逻辑，若无错误， error_msg 为当前出牌玩家序号
                 error_msg, celebrate = trick.record_play(player, cards, trump_rank, trump_suit)
                 if error_msg not in range(4):
                     await ws.send(json.dumps({
@@ -340,34 +340,25 @@ async def handler(ws):
                     player.hand.remove(c)
                 expected_number = (error_msg + 1) % 4
                 expected_player = next(p for p in room.players if p.player_number == expected_number)
-                # 广播出牌信息
-                await manager.broadcast(room, {
-                    "type": "play_card",
-                    "player_id": player.player_id,
-                    "player_number": player.player_number,
-                    "player_name": player.nickname or f"玩家 {player.player_number}",
-                    "cards": cards,
-                    "celebrate_cue": celebrate,
-                    "expected_player": expected_player.nickname or f"玩家 {expected_player.player_number} "
-                })#FIXME：当trick结束时需要显示上一轮赢家为下一位玩家
                 # 更新自己的手牌显示
                 await ws.send(json.dumps({
                     "type": "your_hand",
                     "hand": player.hand
                 }))
-                # ✅ 所有玩家都出过牌，进入结算阶段
+                # ✅ 若所有玩家都出过牌，进入 Trick 结算阶段
                 if len(set(pn for pn, _, _ in trick.play_sequence)) == 4:
                     winner, max_card, team_id, points = trick.resolve()
                     result = deal.get_team_points()
+                    winner_player = game.get_player_by_number(winner)
                     await manager.broadcast(room, {
                         "type": "trick_done",
-                        "winner_player_number": winner,
+                        "winner_player_name": winner_player.nickname or f"玩家 {winner}",
                         "winning_card": max_card,
                         "winning_team_id": team_id,
                         "trick_points": points,
                         "result": result
                     })
-                    # 如果一整局deal结束，翻出底牌
+                    # 如果一整局deal结束，翻出底牌 #FIXME：应先判断是否结束deal，则不会显示多余的“下一个出牌的玩家是...""
                     if all(len(p.hand) == 0 for p in room.players):
                         #TODO：可以将player类中的 hidden cards去除，直接放在deal中
                         dealer_score, challenger_score, next_dealer_team, next_dealer, next_trump_rank = game.finish_current_deal()
@@ -390,8 +381,8 @@ async def handler(ws):
                                 "hand": p.hidden_cards
                             }))
                         game.current_deal = None # 清空当前 deal
-                    else: 
                     # 在一般情况下加入新 Trick，胜者先出
+                    else:
                         new_trick = Trick(
                             trump_rank=deal.trump_rank,
                             trump_suit=deal.trump_suit,
@@ -399,6 +390,17 @@ async def handler(ws):
                             starting_player_index=winner,
                         )
                         deal.tricks.append(new_trick)
+                # 若还未过完整个 Trick，广播出牌信息
+                else:
+                    await manager.broadcast(room, {
+                        "type": "play_card",
+                        "player_id": player.player_id,
+                        "player_number": player.player_number,
+                        "player_name": player.nickname or f"玩家 {player.player_number}",
+                        "cards": cards,
+                        "celebrate_cue": celebrate,
+                        "expected_player": expected_player.nickname or f"玩家 {expected_player.player_number} "
+                    })
 
     #TODO：玩家退出后自动退队
     except websockets.exceptions.ConnectionClosed:

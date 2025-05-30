@@ -2,7 +2,6 @@ from dataclasses import dataclass, field
 from typing import List, Tuple, Optional, Dict
 
 from .player import Player
-from .team import Team
 from .cards import Cards
 
 @dataclass
@@ -63,6 +62,7 @@ class Trick:
     
     
     def record_play(self, player: Player, cards: List[str], trump_rank: str, trump_suit: str) -> Tuple[Optional[str], Optional[str]]:
+        # TODO：可以去掉 trump rank & suit 的输入，直接从 trick 中调取
         """
         判断并记录玩家出牌，处理合法性和代表牌记录
         """

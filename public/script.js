@@ -197,7 +197,7 @@ const handDiv   = document.getElementById("card-container");
             break;
 
           case "trick_done":
-            playLog.innerHTML += `🎉 本轮 玩家 ${data.winner_player_number} 赢得了本轮！${data.winning_team_id} 队获得了 ${data.trick_points} 分！\n`;
+            playLog.innerHTML += `🎉 本轮 ${data.winner_player_name} 赢得了本轮！${data.winning_team_id} 队获得了 ${data.trick_points} 分！<br>下一个出牌的玩家是${data.winner_player_name}\n`;
             // 更新分数
             if (data.result) {
               teamAScore.textContent = data.result[0] || 0;
