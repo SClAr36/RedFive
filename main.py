@@ -47,7 +47,7 @@ async def deal_cards(room: Room, suit: str, dealer: Player, dealer_team: Team):
             "type": "your_hidden",
             "cards": p.hidden_cards
         }))
-    # 发送完牌完成消息 #TODO: 这里的deal_ready是多余的，deal_start就可以了
+    # 发送完牌完成消息（这里的deal_ready是多余的，纯粹为了效果）
     await manager.broadcast(room, { 
         "type": "deal_ready",
         "room_id": room.room_id
@@ -120,7 +120,8 @@ async def handler(ws):
                         "player_name": player.nickname or f"玩家 {player_number} ",
                         "team_id": choice,
                         "player_id": player.player_id
-                    })#FIXME:当玩家没有修改昵称时，无法返回“以前”的玩家序号，前端会显示：“玩家1 to 玩家1”这种重复信息
+                    })#FIXME：当玩家没有修改昵称时，无法返回“以前”的玩家序号，前端会显示：“玩家1 to 玩家1”这种重复信息
+                    #TODO：前端room status更新每个人新玩家号（需给每个玩家单独发送）
 
             elif data["type"] == "ready":
                 player.is_ready = True
@@ -191,7 +192,7 @@ async def handler(ws):
                     "type": "team_cleared"
                 })
 
-            elif data["type"] == "start_new_game": #FIXME：当上局没结束时开始新游戏需要清空hidden（传一个hidden消息）
+            elif data["type"] == "start_new_game":
             # —— 公共：任何 start_game 的请求，先检查分队是否已满 —— 
                 if len(room.players) < 4:
                     await ws.send(json.dumps({
@@ -356,7 +357,7 @@ async def handler(ws):
                         "player_number": player.player_number,
                         "player_name": player.nickname or f"玩家 {player.player_number}",
                         "cards": cards,
-                        "celebrate_cue": celebrate,
+                        "celebrate_cue": celebrate
                     })
                     await manager.broadcast(room, {
                         "type": "trick_done",

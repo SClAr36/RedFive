@@ -1,37 +1,4 @@
-前端需要提醒出牌
-以及改善出牌花色显示
-
-在前端增加了两个选队按钮:
-funtion selectTeam(teamId)
-    type: "select_team" 
-    team_id: teamId
-
 点击分队键后，更新成员队伍及序号（建议把玩家序号按1234排？）
-后端收到后broadcast:
-    "type": "team_update",
-    "players": [
-        {"player_id": u.player_id, "team_id": u.team_id, "player_number": u.player_number}
-        for u in room.players
-    ]
-请更新在房间日志或是room-status里
-
-点击撤销分队后，前端收到消息{
-    "type": "team_cleared"
-                }
-
-
-每个trick结束后后端broadcast现更新为：
-{
-    "type": "trick_done",
-    "winner_player_number": winner,
-    "winning_card": max_card,
-    "winning_team_id": team_id,
-    "trick_points": points,
-    "result": {
-        dealer_team.team_id(庄家队号：0 或 1): points,
-        challenger_team.team_id（擂队队号：0 或 1） : points
-    }
-}
 
 
 拖拉机6张及以上跳过参谋没写。8张主数。
