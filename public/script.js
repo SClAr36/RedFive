@@ -186,7 +186,7 @@ const handDiv   = document.getElementById("card-container");
             if (data.celebrate_cue == "siu!!!") {
               playGifAnimation("content/cr7-siuuuuu.gif");
             } else if (data.celebrate_cue == "KING!") {
-              playGifAnimation("content/cr7-kick.gif");
+              playGifAnimation("content/king.gif");
             } else if (data.celebrate_cue == "tractor!") {
               playGifAnimation("content/tractor.gif");
             } else if (data.celebrate_cue == "lulu!") {
