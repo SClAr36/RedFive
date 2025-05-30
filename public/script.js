@@ -167,18 +167,32 @@ const handDiv   = document.getElementById("card-container");
             hiddenDiv.innerHTML = "";
             data.cards.forEach(card => {
               const el = document.createElement("span");
-              el.textContent = card + " ";
+              if (card === "JOKER1") {
+                el.innerHTML = "🃏";
+                el.className = "joker-small";
+              } else if (card === "JOKER2") {
+                el.innerHTML = "🃏";
+                el.className = "joker-big";
+              } else {
+                el.textContent = card;
+              }
               hiddenDiv.appendChild(el);
             });
             break;
 
           case "play_card":
             const cardsHtml = data.cards.map(card => {
-              const suit = card.slice(-1);
-              const className = suit === '♥' ? 'card-heart' : 
-                                suit === '♦' ? 'card-diamond' :
-                                suit === '♠' ? 'card-spade' : 'card-club';
-              return `<span class="${className}">${card}</span>`;
+              if (card === "JOKER1") {
+                return `<span class="card-joker joker-small">🃏</span>`;
+              } else if (card === "JOKER2") {
+                return `<span class="card-joker joker-big">🃏</span>`;
+              } else {
+                const suit = card.slice(-1);
+                const className = suit === '♥' ? 'card-heart' : 
+                                  suit === '♦' ? 'card-diamond' :
+                                  suit === '♠' ? 'card-spade' : 'card-club';
+                return `<span class="${className}">${card}</span>`;
+              }
             }).join(", ");
             playLog.innerHTML += `🕹️ ${data.player_name} 出了牌：${cardsHtml}<br>下一个出牌的玩家是${data.expected_player}\n`;
             
@@ -335,13 +349,30 @@ const handDiv   = document.getElementById("card-container");
 
     function createCardElement(card, index) {
       const cardEl = document.createElement("div"); cardEl.className = "card";
-      const rank = card.slice(0, -1); const suit = card.slice(-1);
-
-      const rankEl = document.createElement("div"); rankEl.className = "card-rank"; rankEl.textContent = rank;
-      const suitEl = document.createElement("div"); suitEl.className = "card-suit"; suitEl.textContent = suit;
-
-      cardEl.appendChild(rankEl); cardEl.appendChild(suitEl);
-      if (['♥','♦','♠','♣'].includes(suit)) cardEl.setAttribute('data-suit', suit);
+      
+      let rank, suit;
+      
+      // Handle JOKER cards specially
+      if (card === "JOKER1") {
+        // Create a large joker emoji for the entire card
+        cardEl.classList.add("joker", "joker-small");
+        cardEl.setAttribute('data-suit', 'joker1');
+        cardEl.innerHTML = '<div class="joker-emoji">🃏</div>';
+      } else if (card === "JOKER2") {
+        // Create a large joker emoji for the entire card
+        cardEl.classList.add("joker", "joker-big");
+        cardEl.setAttribute('data-suit', 'joker2');
+        cardEl.innerHTML = '<div class="joker-emoji">🃏</div>';
+      } else {
+        // Handle regular cards
+        rank = card.slice(0, -1);
+        suit = card.slice(-1);
+        if (['♥','♦','♠','♣'].includes(suit)) cardEl.setAttribute('data-suit', suit);
+        
+        const rankEl = document.createElement("div"); rankEl.className = "card-rank"; rankEl.textContent = rank;
+        const suitEl = document.createElement("div"); suitEl.className = "card-suit"; suitEl.textContent = suit;
+        cardEl.appendChild(rankEl); cardEl.appendChild(suitEl);
+      }
 
       cardEl.style.zIndex = index;
       cardEl.onclick = () => cardEl.classList.toggle("selected");
@@ -351,9 +382,17 @@ const handDiv   = document.getElementById("card-container");
     function sendPlay() {
       const selectedCards = [];
       document.querySelectorAll(".card.selected").forEach(card => {
-        const rank = card.querySelector(".card-rank").textContent;
-        const suit = card.querySelector(".card-suit").textContent;
-        selectedCards.push(rank + suit);
+        // Check if it's a joker card
+        if (card.classList.contains("joker-small")) {
+          selectedCards.push("JOKER1");
+        } else if (card.classList.contains("joker-big")) {
+          selectedCards.push("JOKER2");
+        } else {
+          // For regular cards, get rank and suit from elements
+          const rank = card.querySelector(".card-rank").textContent;
+          const suit = card.querySelector(".card-suit").textContent;
+          selectedCards.push(rank + suit);
+        }
       });
       if (selectedCards.length === 0) { alert("请先选择要出的牌！"); return; }
       ws.send(JSON.stringify({ type: "play_card", cards: selectedCards }));
@@ -363,9 +402,17 @@ const handDiv   = document.getElementById("card-container");
     function hideCards() {
       const selectedCards = [];
       document.querySelectorAll(".card.selected").forEach(card => {
-        const rank = card.querySelector(".card-rank").textContent;
-        const suit = card.querySelector(".card-suit").textContent;
-        selectedCards.push(rank + suit);
+        // Check if it's a joker card
+        if (card.classList.contains("joker-small")) {
+          selectedCards.push("JOKER1");
+        } else if (card.classList.contains("joker-big")) {
+          selectedCards.push("JOKER2");
+        } else {
+          // For regular cards, get rank and suit from elements
+          const rank = card.querySelector(".card-rank").textContent;
+          const suit = card.querySelector(".card-suit").textContent;
+          selectedCards.push(rank + suit);
+        }
       });
       // if (selectedCards.length !== 8) { alert="请选择恰好 8 张牌作为底牌！"; return; }
       ws.send(JSON.stringify({ type: "hide_cards", cards: selectedCards }));
