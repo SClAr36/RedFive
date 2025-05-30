@@ -351,6 +351,14 @@ async def handler(ws):
                     result = deal.get_team_points()
                     winner_player = game.get_player_by_number(winner)
                     await manager.broadcast(room, {
+                        "type": "play_card",
+                        "player_id": player.player_id,
+                        "player_number": player.player_number,
+                        "player_name": player.nickname or f"玩家 {player.player_number}",
+                        "cards": cards,
+                        "celebrate_cue": celebrate,
+                    })
+                    await manager.broadcast(room, {
                         "type": "trick_done",
                         "winner_player_name": winner_player.nickname or f"玩家 {winner}",
                         "winning_card": max_card,

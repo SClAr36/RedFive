@@ -194,7 +194,7 @@ const handDiv   = document.getElementById("card-container");
                 return `<span class="${className}">${card}</span>`;
               }
             }).join(", ");
-            playLog.innerHTML += `🕹️ ${data.player_name} 出了牌：${cardsHtml}<br>下一个出牌的玩家是${data.expected_player}\n`;
+            playLog.innerHTML += `🕹️ ${data.player_name} 出了牌：${cardsHtml}` + (data.expected_player ? `<br>下一个出牌的玩家是${data.expected_player}` : "") + `\n`;
             // 自动滚动到底部
             playLog.scrollTop = playLog.scrollHeight;
             
