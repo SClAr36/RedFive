@@ -195,6 +195,8 @@ const handDiv   = document.getElementById("card-container");
               }
             }).join(", ");
             playLog.innerHTML += `🕹️ ${data.player_name} 出了牌：${cardsHtml}<br>下一个出牌的玩家是${data.expected_player}\n`;
+            // 自动滚动到底部
+            playLog.scrollTop = playLog.scrollHeight;
             
             // 只有特定牌型才播放动画
             if (data.celebrate_cue == "siu!!!") {
@@ -212,6 +214,7 @@ const handDiv   = document.getElementById("card-container");
 
           case "trick_done":
             playLog.innerHTML += `🎉 本轮 ${data.winner_player_name} 赢得了本轮！${data.winning_team_id} 队获得了 ${data.trick_points} 分！<br>下一个出牌的玩家是${data.winner_player_name}\n`;
+            playLog.scrollTop = playLog.scrollHeight;
             // 更新分数
             if (data.result) {
               teamAScore.textContent = data.result[0] || 0;
@@ -221,7 +224,8 @@ const handDiv   = document.getElementById("card-container");
 
           case "deal_done":
             playLog.innerHTML += `本局已结束！庄家藏牌为${data.hidden}\n庄队获得 ${data.dealer_score} 分\n擂队获得 ${data.challenger_score} 分\n下局庄家 ${data.next_dealer}, 下局主数 ${data.next_trump_rank}\n `;
-          break;
+            playLog.scrollTop = playLog.scrollHeight;
+            break;
             
           case "error":
             alert("⚠️ 错误：" + data.message);
