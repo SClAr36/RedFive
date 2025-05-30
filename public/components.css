@@ -69,6 +69,9 @@
   transform-origin: center bottom;
   border: 2px solid var(--accent);
   margin-right: -42px;
+
+  /* 新增 ↓——裁剪任何探出牌面的内容，鼠标命中范围=牌面范围 */
+  overflow: hidden;
 }
 
 .card-rank, .card-suit { 
@@ -109,25 +112,27 @@
 
 /* ---------- JOKER 牌特殊样式 ---------- */
 .card.joker {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: 1px solid #5a67d8;
-  color: white;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border: 1px solid #dee2e6;
+  color: #343a40;
 }
 
 .card.joker-small {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 0 1px 3px rgba(102, 126, 234, 0.3);
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border: 1px solid #dee2e6;
+  color: #343a40;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
 .card.joker-big {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  border: 1px solid #e53e3e;
-  box-shadow: 0 1px 3px rgba(240, 147, 251, 0.3);
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  border: 1px solid #FF5A5F;
+  box-shadow: 0 1px 3px rgba(220, 53, 69, 0.3);
 }
 
 /* Large joker emoji styling */
 .joker-emoji {
-  font-size: 85px;
+  font-size: 90px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -138,21 +143,24 @@
 }
 
 .card.joker:hover {
-  transform: translateY(-10px) scale(1.05);
-  box-shadow: 0 12px 20px rgba(102, 126, 234, 0.4);
+  transform: translateY(-10px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+  z-index: 5;
 }
 
 .card.joker-big:hover {
-  box-shadow: 0 12px 20px rgba(240, 147, 251, 0.4);
+  transform: translateY(-10px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+  z-index: 5;
 }
 
 .card.joker.selected {
   transform: translateY(-24px) scale(1.05);
-  box-shadow: 0 16px 32px rgba(102, 126, 234, 0.5);
+  box-shadow: 0 16px 32px rgba(52, 58, 64, 0.5);
 }
 
 .card.joker-big.selected {
-  box-shadow: 0 16px 32px rgba(240, 147, 251, 0.5);
+  box-shadow: 0 16px 32px rgba(220, 53, 69, 0.5);
 }
 
 #hidden {
@@ -179,17 +187,17 @@
 
 /* JOKER 牌在底牌区的样式 */
 #hidden span.joker-small {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: 0px solid #5a67d8;
-  text-shadow: 0 0px 0px rgba(0,0,0,0.3);
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  color: #343a40;
+  border: 1px solid #dee2e6;
+  text-shadow: 0 0px 0px rgba(0,0,0,0.1);
   font-size: 20px;
 }
 
 #hidden span.joker-big {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
   color: white;
-  border: 0px solid #e53e3e;
+  border: 0px solid #bd2130;
   text-shadow: 0 0px 0px rgba(0,0,0,0.3);
   font-size: 20px;
 }
@@ -215,12 +223,13 @@
 }
 
 .play-log-content .joker-small {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  color: #343a40;
+  border: 1px solid #dee2e6;
 }
 
 .play-log-content .joker-big {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
   color: white;
 }
 
