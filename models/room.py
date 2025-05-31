@@ -5,6 +5,7 @@ from .team import Team
 from .game import Game
 from .deal import Deal
 
+#TODO：支持房间改名
 @dataclass
 class Room:
     """一个房间，包含固定的玩家、队伍，允许多局游戏"""

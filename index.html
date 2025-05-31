@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>欢迎进入红五冲冲冲</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #FFF5F5;
+      text-align: center;
+      padding: 40px;
+      color: #333;
+    }
+    h1 {
+      color: #FF6B81;
+    }
+    button {
+      display: block;
+      margin: 16px auto;
+      padding: 12px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background-color: #FF9AA2;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #FF6B81;
+    }
+    #room-list {
+      margin-top: 24px;
+    }
+  </style>
+</head>
+<body>
+  <h1>红五冲冲冲 🎴</h1>
+  <p>请选择进入方式</p>
+
+  <button onclick="createRoom()">🎯 创建新房间</button>
+  <button onclick="autoJoin()">🚀 自动加入房间</button>
+
+  <div id="room-list">
+    <h3>📜 可加入房间：</h3>
+    <p>正在加载...</p>
+  </div>
+
+  <script>
+    const ws = new WebSocket("ws://localhost:8765");
+
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ type: "list_rooms" }));
+    };
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === "room_list") {
+        const container = document.getElementById("room-list");
+        if (data.rooms.length === 0) {
+          container.innerHTML = "<p>当前暂无房间，您可以创建一个。</p>";
+          return;
+        }
+        container.innerHTML = "<h3>📜 可加入房间：</h3>";
+        data.rooms.forEach(roomId => {
+          const btn = document.createElement("button");
+          btn.textContent = "加入房间 " + roomId;
+          btn.onclick = () => joinRoom(roomId);
+          container.appendChild(btn);
+        });
+      }
+    };
+
+    function createRoom() {
+      const newId = "room-" + Math.floor(Math.random() * 100000);
+      localStorage.setItem("chosen_room_id", newId);
+      window.location.href = "client.html";
+    }
+
+    function autoJoin() {
+      localStorage.setItem("chosen_room_id", "AUTO");
+      window.location.href = "client.html";
+    }
+
+    function joinRoom(roomId) {
+      localStorage.setItem("chosen_room_id", roomId);
+      window.location.href = "client.html";
+    }
+  </script>
+</body>
+</html>
