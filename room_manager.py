@@ -8,6 +8,8 @@ from models.room import Room
 from models.team import Team
 
 
+#TODO：玩家自主选择放假
+#TODO：退出房间时自动清理玩家和房间
 class RoomManager:
     """统一管理所有房间（room_id）、每个连接对应的玩家，以及广播"""
 
