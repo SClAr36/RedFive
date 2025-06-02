@@ -13,8 +13,8 @@ from models.team import Team
 from models.player import Player
 from models.room import Room
 
-
 manager = RoomManager()
+index_msg_types = ["list_rooms", "create_room", "join_room"]
 
 # ！！！调用需注意：发牌函数本身不含主数！只是在 start_new_deal(...) 中载入主数为庄家主数。
 # ！！！所以使用前庄家主数不能为 None！
@@ -55,34 +55,86 @@ async def deal_cards(room: Room, suit: str, dealer: Player, dealer_team: Team):
     deal.tricks = [Trick(trump_rank=deal.trump_rank, trump_suit=deal.trump_suit, starting_player_index=game.players.index(dealer))]
 
 
+
 async def handler(ws):
     print("新玩家连接")
     try:
-        player = manager.assign_player(ws)
-        room = manager.get_room(ws)
-
-        player_number = room.players.index(player)
-        player.player_number = player_number
-        
-        await ws.send(json.dumps({
-            "type": "welcome",
-            "room_id": room.room_id,
-            "player_id": player.player_id,
-            "player_number": player_number
-        }))
-
-        await manager.broadcast(room, {
-            "type": "player_join",
-            "room_id": room.room_id,
-            "player_id": player.player_id,
-            "player_number": player_number
-        }, exclude_ws=ws)
-
         async for raw in ws:
             data = json.loads(raw)
-            print(f"[{player.player_id}] 发送: {data}")
+            #处理加入房间部分：
+            if data["type"] == "list_rooms":
+                # 返回当前所有房间 ID（字符串列表）
+                room_ids = list(manager.rooms.keys())  # manager 是 RoomManager 实例
+                await ws.send(json.dumps({
+                    "type": "room_list",
+                    "rooms": [
+                        {
+                            "room_id": room.room_id,
+                            "room_name": room.room_name
+                        }
+                        for room in manager.rooms.values()
+                    ]
+                }))
+            
+            if data["type"] == "create_room":
+                # 创建新房间
+                print("创建新房间")
+                room_name = data.get("room_name", "未命名房间")
+                room = manager.create_room(ws, room_name)
+                await ws.send(json.dumps({
+                    "type": "room_created",
+                    "room_id": room.room_id,
+                    "room_name": room.room_name
+                }))
+            
+            if data["type"] == "join_room":
+                requested_id = data["room_id"]
+                room = None
+            
+                if requested_id == "AUTO":
+                    # 自动找一个未满的房间或创建新房间
+                    room = next((r for r in manager.rooms.values() if len(r.players) < 4), None)
+                    if room is None:
+                        room = manager.create_room("未命名房间")
+                else:
+                    # 指定加入已有房间
+                    room = manager.rooms.get(requested_id)
+                    if room is None:
+                        await ws.send(json.dumps({
+                            "type": "error",
+                            "message": f"房间 {requested_id} 不存在，请返回主页重新选择"
+                        }))
+                        return
+                    try:
+                        player = manager.assign_player(ws, room)
+                    except ValueError as e:
+                        await ws.send(json.dumps({
+                            "type": "error",
+                            "message": str(e)
+                        }))
+                        return
 
-            if data["type"] == "set_nickname":
+                await ws.send(json.dumps({
+                    "type": "room_joined",
+                    "room_id": room.room_id
+                }))
+            
+                await manager.broadcast(room, {
+                    "type": "player_join",
+                    "room_id": room.room_id,
+                    "player_id": player.player_id,
+                    "player_number": player.player_number
+                })
+            
+            #加入房间后的处理部分：
+            if data["type"] not in index_msg_types:
+                player = manager.ws_to_player[ws]
+                room = manager.get_room(ws)
+                player_number = room.players.index(player)
+                player.player_number = player_number
+                print(f"[{player.player_id}] 发送: {data}")
+
+            if data["type"] == "set_nickname": #TODO：可以在index就设置用户昵称
                 player.nickname = data["nickname"]
                 await manager.broadcast(room, {
                     "type": "nickname_set",
@@ -133,21 +185,23 @@ async def handler(ws):
 
             elif data["type"] == "team_update":
                 # 先检查房间玩家是否已有四人
+                print(room)
                 if len(room.players) < 4:
                     await ws.send(json.dumps({
                         "type": "error",
                         "message": "房间不足4人，无法分队"
                     }))
                     continue
+                for p in room.players:
+                    p.player_number = room.players.index(p)  # 确保 player_number 正确
                 # 1. 从 room.teams 直接取出已选队员
                 team0 = room.teams[0].members      # 已在队 0 的玩家列表
                 team1 = room.teams[1].members      # 已在队 1 的玩家列表
                 # 2. 三种分队情况
                 if not team0 and not team1:
                     # A. 两队都空 → 按 player_number 默认分配
-                    ordered = sorted(room.players, key=lambda p: p.player_number)
-                    team0[:] = [ordered[0], ordered[2]]
-                    team1[:] = [ordered[1], ordered[3]]
+                    for p in room.players:
+                        team0.append(p) if p.player_number % 2 == 0 else team1.append(p)
                 elif len(team0) == 2 and len(team1) == 2:
                     # B. 两队都满 → 保持现有 members，不改
                     pass
@@ -198,6 +252,12 @@ async def handler(ws):
                     await ws.send(json.dumps({
                         "type": "error",
                         "message": "玩家人数不足"
+                    }))
+                    continue
+                if not room.teams or len(room.teams) < 2:
+                    await ws.send(json.dumps({
+                        "type": "error",
+                        "message": "请先完成分队"
                     }))
                     continue
                 # if not all(p.is_ready for p in room.players):

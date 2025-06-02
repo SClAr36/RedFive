@@ -10,11 +10,17 @@ from .deal import Deal
 class Room:
     """一个房间，包含固定的玩家、队伍，允许多局游戏"""
     room_id: str
+    room_name: Optional[str] = None
     players: List[Player] = field(default_factory=list)
     teams: Dict[int, Team] = field(default_factory=dict)
     active_game: Optional[Game] = None
     past_games: List[Game] = field(default_factory=list)
     game_count: int = 0
+
+    def __post_init__(self):
+        if self.room_name is None:
+            self.room_name = self.room_id[:8]
+        self.teams = {0: Team(team_id=0, members=[]), 1: Team(team_id=1, members=[])}
 
     # 开始游戏，默认两队主数为 2
     def start_new_game(self, rank0=None, rank1=None): #FIXME:主数输入不一定按0、1顺序，可能按庄顺序

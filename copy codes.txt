@@ -1,0 +1,16 @@
+main.py:
+
+elif data["type"] == "join_room":
+    rid = data["room_id"]
+    room = None
+    if rid != "AUTO":
+        room = manager.rooms.get(rid)
+        if not room:
+            await websocket.send(json.dumps({
+                "type": "error",
+                "message": "房间不存在"
+            }))
+            return
+
+
+

@@ -22,9 +22,21 @@ const handDiv   = document.getElementById("card-container");
     });
 
     // 初始化房间状态
+    const roomId = localStorage.getItem("chosen_room_id");
+
+    if (!roomId) {
+      alert("❗ 未检测到房间信息，请先从首页选择或创建房间！");
+      window.location.href = "index.html";
+    } else {
+      console.log("准备连接房间 ID:", roomId);
+    }
+
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ type: "join_room", room_id: roomId }));
+    };
+
     roomStatus.textContent = "🎲 欢迎加入红五冲冲冲游戏！请设置昵称并准备";
 
-    ws.onopen  = () => { log.textContent += "✅ 已连接服务器\n"; };
     ws.onclose = () => { log.textContent += "🔌 连接关闭\n"; };
 
     let hand = [];
