@@ -29,7 +29,9 @@ async def deal_cards(room: Room, suit: str, dealer: Player, dealer_team: Team):
     await manager.broadcast(room, {
         "type": "deal_start",
         "rank_input": rank,
-        "suit_input": suit
+        "suit_input": suit,
+        "dealer": dealer.nickname or f"玩家 {dealer.player_number}",
+        "dealer_team": dealer_team.team_id,
     })
     deal.deal_to_players(suit, game.players, dealer, dealer_team)
     # 发送每个玩家的手牌
@@ -174,8 +176,7 @@ async def handler(ws):
                         "player_name": player.nickname or f"玩家 {player_number} ",
                         "team_id": choice,
                         "player_id": player.player_id
-                    })#FIXME：当玩家没有修改昵称时，无法返回“以前”的玩家序号，前端会显示：“玩家1 to 玩家1”这种重复信息
-                    #TODO：前端room status更新每个人新玩家号（需给每个玩家单独发送）
+                    })
 
             elif data["type"] == "ready":
                 player.is_ready = True
@@ -196,7 +197,7 @@ async def handler(ws):
                 # 1. 从 room.teams 直接取出已选队员，调取旧玩家号
                 team0 = room.teams[0].members      # 已在队 0 的玩家列表
                 team1 = room.teams[1].members      # 已在队 1 的玩家列表
-                #old_order = room.players.copy()    # 旧的玩家列表顺序
+                old_order = room.players.copy()    # 旧的玩家列表顺序
                 # 2. 三种分队情况
                 if not team0 and not team1:
                     # A. 两队都空 → 按 player_number 默认分配
@@ -234,12 +235,21 @@ async def handler(ws):
                 await manager.broadcast(room, {
                     "type": "update_teams",
                     "players": [{"player_id": p.player_id,
-                                 "player_name": p.nickname or f"玩家 {p.player_number} ",
+                                 "player_name": p.nickname or f"玩家 {old_order.index(p) if p in old_order else None} ",
                                  "player_team": p.team_id,
-                                 #"old_player_number": old_order.index(p) if p in old_order else None,
                                  "player_number": p.player_number}
                     for p in room.players]
                 })
+                for p in room.players:
+                    target_ws = next(w for w, pl in manager.ws_to_player.items() if pl is p)
+                    await target_ws.send(json.dumps({
+                        "type": "personal_update",
+                        "player_id": p.player_id,
+                        "player_number": p.player_number,
+                        "player_team": p.team_id,
+                        "player_name": p.nickname or f"玩家 {p.player_number} ",
+                        "trump_rank": room.teams[p.team_id].trump_rank if p.team_id is not None else None
+                    }))#TODO：可在每次打完后update个人信息
 
             elif data["type"] == "clear_team":
                 for p in room.players:

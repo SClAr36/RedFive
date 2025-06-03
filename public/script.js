@@ -47,11 +47,6 @@ const handDiv   = document.getElementById("card-container");
         const data = JSON.parse(event.data);
 
         switch (data.type) {
-          // case "room_created":
-          //   log.textContent += `房间 "${data.room_name}" (${data.room_id.slice(0, 8)}) 创建成功！\n`;
-          //   log.textContent  = `欢迎加入房间"${data.room_name}"(${data.room_id.slice(0, 8)})，${data.player_id.slice(0, 8)}，你是玩家 ${data.player_number}\n`;
-          //   break;
-
           case "room_joined":
             log.textContent  = `欢迎加入房间"${data.room_name}"(${data.room_id.slice(0, 8)})，${data.player_id.slice(0, 8)}，你是玩家 ${data.player_number}\n`;
             roomStatus.textContent = `👋 欢迎加入房间 ${data.room_name}，你是玩家 ${data.player_number}`;
@@ -101,33 +96,15 @@ const handDiv   = document.getElementById("card-container");
             
             addChatMessage("系统", msg, false);
             break;
-            // const teamA = [];
-            // const teamB = [];
-            //寻找每个玩家所属队伍
-            // data.players.forEach(p => {
-              // if (p.player_team === 0) {
-                // teamA.push(p.player_name);
-              // } else {
-                // teamB.push(p.player_name);
-              // }
-            // });
-            //更新分队信息
-            // const msg = `分队完成：<br>
-            // 🟥 队A成员：${teamA.join('，')}<br>
-            // 🟦 队B成员：${teamB.join('，')}`;
-            // addChatMessage("系统", msg, false);
-            //附加一条更新玩家编号的广播
-            // const numMsg = data.players
-              // .map(p => {
-                // const color = (p.player_number % 2 === 0) ? '#FF8A80' : '#7CAEFF';
-                // const bullet = `<span style="color:${color}">●</span>`;
-                // return `${bullet} ${p.player_name} ➜ 玩家 ${p.player_number}`;
-              // })
-              // .join("<br>");
-            // addChatMessage("系统", `更新后的玩家序号为：<br>${numMsg}`, false);
-            // break;
 
-          case "team_cleared":
+          case "personal_update":
+            roomStatus.textContent = `${data.player_name}，你现在是玩家 ${data.player_number}，你属于 ${data.team_id === 0 ? 'A' : 'B'} 队`;
+            if (data.trump_rank !== null) {
+              roomStatus.textContent += `，你们队的主数是 ${data.trump_rank}`;
+            }
+            break;
+
+            case "team_cleared":
             addChatMessage("系统", `分队取消，请全体玩家重新选择队伍`, false);
             break;
 
@@ -162,7 +139,7 @@ const handDiv   = document.getElementById("card-container");
             break;
 
           case "deal_start":
-            roomStatus.textContent = `🎯 本轮主数：${data.rank_input}，主花色：${data.suit_input}`;
+            roomStatus.textContent = `🎯 本轮主数：${data.rank_input}，主花色：${data.suit_input}，庄家是“${data.dealer}”，${data.dealer_team === 0 ? 'A' : 'B'}队坐庄`;
             log.textContent += `🎲 开始发牌！主数是 ${data.rank_input}，主花色是 ${data.suit_input}\n`;
             // 重置分数
             teamAScore.textContent = "0";
