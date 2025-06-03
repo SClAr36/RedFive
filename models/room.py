@@ -20,7 +20,6 @@ class Room:
     def __post_init__(self):
         if self.room_name is None:
             self.room_name = self.room_id[:8]
-        self.teams = {0: Team(team_id=0, members=[]), 1: Team(team_id=1, members=[])}
 
     # 开始游戏，默认两队主数为 2
     def start_new_game(self, rank0=None, rank1=None): #FIXME:主数输入不一定按0、1顺序，可能按庄顺序

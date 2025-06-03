@@ -19,8 +19,8 @@ class RoomManager:
 
     def create_room(self, ws, room_name: str = None) -> Room:
         """创建一个新房间，返回 Room 实例"""
-        room_id = str(uuid.uuid4())             # ✅ 使用完整 UUID
-        room = Room(room_id=room_id, room_name=room_name)
+        room_id = str(uuid.uuid4())
+        room = Room(room_id=room_id, room_name=room_name, teams={0: Team(team_id=0, members=[]), 1: Team(team_id=1, members=[])})
         self.rooms[room_id] = room
         return room
 
@@ -34,13 +34,16 @@ class RoomManager:
                 room = self.create_room("未命名房间")  # 👈 只传名称，不传 ws
     
         if len(room.players) >= 4:
-            # ✅ 房间满员时，创建新房间
-            room = self.create_room("新房间")
+            # 房间满员时，抛出异常或返回 None
+            raise ValueError("房间已满，无法加入。请重新选择！")
 
-        # 为新玩家创建 Player 实例并加入房间
-        player = Player(player_id=str(uuid.uuid4())[:8])
-        room.players.append(player)
+        # 为新玩家创建 Player 实例
+        player = Player(player_id=str(uuid.uuid4()))
         self.ws_to_player[ws] = player
+        # 处理房间内信息：玩家加入、设置 player number
+        room.players.append(player)
+        number = room.players.index(player)
+        player.player_number = number
         return player
 
     def get_room(self, ws) -> Room:

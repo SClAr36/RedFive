@@ -185,23 +185,23 @@ async def handler(ws):
 
             elif data["type"] == "team_update":
                 # 先检查房间玩家是否已有四人
-                print(room)
                 if len(room.players) < 4:
                     await ws.send(json.dumps({
                         "type": "error",
                         "message": "房间不足4人，无法分队"
                     }))
                     continue
-                for p in room.players:
-                    p.player_number = room.players.index(p)  # 确保 player_number 正确
                 # 1. 从 room.teams 直接取出已选队员
                 team0 = room.teams[0].members      # 已在队 0 的玩家列表
                 team1 = room.teams[1].members      # 已在队 1 的玩家列表
                 # 2. 三种分队情况
                 if not team0 and not team1:
                     # A. 两队都空 → 按 player_number 默认分配
-                    for p in room.players:
-                        team0.append(p) if p.player_number % 2 == 0 else team1.append(p)
+                    players = sorted(room.players, key=lambda p: p.player_number)
+                    team0.append(players[0])
+                    team0.append(players[2])
+                    team1.append(players[1])
+                    team1.append(players[3])
                 elif len(team0) == 2 and len(team1) == 2:
                     # B. 两队都满 → 保持现有 members，不改
                     pass
