@@ -47,17 +47,22 @@ const handDiv   = document.getElementById("card-container");
         const data = JSON.parse(event.data);
 
         switch (data.type) {
-          case "welcome":
-            log.textContent  = `欢迎加入房间 ${data.room_id}，${data.player_id}，你是玩家 ${data.player_number}\n`;
+          // case "room_created":
+          //   log.textContent += `房间 "${data.room_name}" (${data.room_id.slice(0, 8)}) 创建成功！\n`;
+          //   log.textContent  = `欢迎加入房间"${data.room_name}"(${data.room_id.slice(0, 8)})，${data.player_id.slice(0, 8)}，你是玩家 ${data.player_number}\n`;
+          //   break;
+
+          case "room_joined":
+            log.textContent  = `欢迎加入房间"${data.room_name}"(${data.room_id.slice(0, 8)})，${data.player_id.slice(0, 8)}，你是玩家 ${data.player_number}\n`;
             roomStatus.textContent = `👋 欢迎加入房间 ${data.room_id}，你是玩家 ${data.player_number}`;
             break;
 
           case "player_join":
-            log.textContent += `👤 玩家${data.player_id} (玩家${data.player_number}) 加入了房间 ${data.room_id}\n`;
+            log.textContent += `👤 玩家${data.player_id.slice(0, 8)} (玩家${data.player_number}) 加入了房间\n`;
             break;
 
           case "nickname_set":
-            log.textContent += `📛 玩家${data.player_id} (玩家${data.player_number}) 设置昵称为 ${data.nickname}\n`;
+            log.textContent += `📛 玩家${data.player_id.slice(0, 8)} (玩家${data.player_number}) 设置昵称为 ${data.nickname}\n`;
             if (data.player_name === currentNickname) {
               currentNickname = data.nickname;
             }

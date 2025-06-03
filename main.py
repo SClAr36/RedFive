@@ -96,6 +96,7 @@ async def handler(ws):
                     room = next((r for r in manager.rooms.values() if len(r.players) < 4), None)
                     if room is None:
                         room = manager.create_room("未命名房间")
+                        player = manager.assign_player(ws, room)
                 else:
                     # 指定加入已有房间
                     room = manager.rooms.get(requested_id)
@@ -116,7 +117,10 @@ async def handler(ws):
 
                 await ws.send(json.dumps({
                     "type": "room_joined",
-                    "room_id": room.room_id
+                    "room_id": room.room_id,
+                    "room_name": room.room_name,
+                    "player_id": player.player_id,
+                    "player_number": player.player_number,
                 }))
             
                 await manager.broadcast(room, {
@@ -124,7 +128,7 @@ async def handler(ws):
                     "room_id": room.room_id,
                     "player_id": player.player_id,
                     "player_number": player.player_number
-                })
+                }, exclude_ws=ws)
             
             #加入房间后的处理部分：
             if data["type"] not in index_msg_types:
