@@ -93,10 +93,8 @@ async def handler(ws):
             
                 if requested_id == "AUTO":
                     # 自动找一个未满的房间或创建新房间
-                    room = next((r for r in manager.rooms.values() if len(r.players) < 4), None)
-                    if room is None:
-                        room = manager.create_room("未命名房间")
-                        player = manager.assign_player(ws, room)
+                    player = manager.assign_player(ws, room)
+                    room = manager.get_room(ws)
                 else:
                     # 指定加入已有房间
                     room = manager.rooms.get(requested_id)
@@ -195,9 +193,10 @@ async def handler(ws):
                         "message": "房间不足4人，无法分队"
                     }))
                     continue
-                # 1. 从 room.teams 直接取出已选队员
+                # 1. 从 room.teams 直接取出已选队员，调取旧玩家号
                 team0 = room.teams[0].members      # 已在队 0 的玩家列表
                 team1 = room.teams[1].members      # 已在队 1 的玩家列表
+                #old_order = room.players.copy()    # 旧的玩家列表顺序
                 # 2. 三种分队情况
                 if not team0 and not team1:
                     # A. 两队都空 → 按 player_number 默认分配
@@ -237,6 +236,7 @@ async def handler(ws):
                     "players": [{"player_id": p.player_id,
                                  "player_name": p.nickname or f"玩家 {p.player_number} ",
                                  "player_team": p.team_id,
+                                 #"old_player_number": old_order.index(p) if p in old_order else None,
                                  "player_number": p.player_number}
                     for p in room.players]
                 })

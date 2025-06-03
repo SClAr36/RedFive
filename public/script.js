@@ -54,7 +54,7 @@ const handDiv   = document.getElementById("card-container");
 
           case "room_joined":
             log.textContent  = `欢迎加入房间"${data.room_name}"(${data.room_id.slice(0, 8)})，${data.player_id.slice(0, 8)}，你是玩家 ${data.player_number}\n`;
-            roomStatus.textContent = `👋 欢迎加入房间 ${data.room_id}，你是玩家 ${data.player_number}`;
+            roomStatus.textContent = `👋 欢迎加入房间 ${data.room_name}，你是玩家 ${data.player_number}`;
             break;
 
           case "player_join":

@@ -8,7 +8,7 @@ from models.room import Room
 from models.team import Team
 
 
-#TODO：玩家自主选择房间
+#TODO: assign player 和 join room 分开，以便玩家在index页面能做更多事（比如修改昵称）存player进localstorage
 #TODO：退出房间时自动清理玩家和房间
 class RoomManager:
     """统一管理所有房间（room_id）、每个连接对应的玩家，以及广播"""

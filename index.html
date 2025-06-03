@@ -75,11 +75,6 @@
         window.location.href = "client.html";
       }
   
-      if (data.type === "room_joined") {
-        localStorage.setItem("chosen_room_id", data.room_id);
-        window.location.href = "client.html";
-      }
-  
       if (data.type === "error") {
         alert("❌ 错误：" + data.message);
       }
@@ -95,11 +90,13 @@
     }
   
     function joinRoom(roomId) {
-      ws.send(JSON.stringify({ type: "join_room", room_id: roomId }));
+      localStorage.setItem("chosen_room_id", roomId);
+      window.location.href = "client.html";
     }
   
     function autoJoin() {
-      ws.send(JSON.stringify({ type: "join_room", room_id: "AUTO" }));
+      localStorage.setItem("chosen_room_id", "AUTO");
+      window.location.href = "client.html";
     }
   </script>
 </body>
