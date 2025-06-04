@@ -1,6 +1,0 @@
-It is the folder of all static files.
-
-outside:
-index.html(future)
-client.html
-

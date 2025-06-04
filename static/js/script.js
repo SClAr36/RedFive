@@ -194,15 +194,15 @@ const handDiv   = document.getElementById("card-container");
             
             // 只有特定牌型才播放动画
             if (data.celebrate_cue == "siu!!!") {
-              playGifAnimation("content/cr7-siuuuuu.gif");
+              playGifAnimation("static/assets/cr7-siuuuuu.gif");
             } else if (data.celebrate_cue == "KING!") {
-              playGifAnimation("content/king.gif");
+              playGifAnimation("static/assets/king.gif");
             } else if (data.celebrate_cue == "tractor!") {
-              playGifAnimation("content/tractor.gif");
+              playGifAnimation("static/assets/tractor.gif");
             } else if (data.celebrate_cue == "lulu!") {
-              playGifAnimation("content/lulu.gif");
+              playGifAnimation("static/assets/lulu.gif");
             } else if (data.celebrate_cue == "dragon!!!") {
-              playGifAnimation("content/goodnight.gif");
+              playGifAnimation("static/assets/goodnight.gif");
             }
             break;
 
