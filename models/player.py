@@ -2,9 +2,8 @@
 
 from dataclasses import dataclass, field
 from typing import List, Optional
-#from room_manager import RoomManager #FIXME: 需要导入 RoomManager
-#from .room import Room
 
+# 若manager有get_team, get_room, 不需要记载team_id和room_id?
 @dataclass
 class Player: #添加房间号、team_id 改为 Team 类信息
     """表示一个玩家，包括身份、昵称和手牌"""

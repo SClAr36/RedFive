@@ -26,8 +26,7 @@ class RoomManager:
 
     def assign_player(self, ws, room: Optional[Room] = None) -> Player:
         """为新 WebSocket 分配房间和玩家"""
-    
-        # 自动分配房间时选未满的；若没找到或房间已满，则创建新房间
+        """自动分配房间时选未满的；若没找到或房间已满，则创建新房间"""
         if room is None:
             room = next((r for r in self.rooms.values() if len(r.players) < 4), None)
             if room is None:
@@ -53,6 +52,19 @@ class RoomManager:
             if player in room.players:
                 return room
         raise KeyError("未找到对应房间")
+    
+    def get_team(self, ws) -> Team:
+        """根据连接 ws 找到玩家所在 Team 实例"""
+        player = self.ws_to_player[ws]
+        room = self.get_room(ws)
+        for team in room.teams.values():
+            if player in team.members:
+                return team
+        raise KeyError("未找到对应队伍")
+    
+    def get_player(self, ws) -> Player:
+        """根据连接 ws 找到对应的 Player 实例"""
+        return self.ws_to_player.get(ws)
 
     async def broadcast(self, room: Room, payload: dict, exclude_ws=None):
         """给房间内所有玩家广播消息，可选排除某一连接"""
